@@ -28,7 +28,7 @@
   <a class="skip" href="#tutorial">動画一覧へ移動</a>
   <header class="topbar">
     <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>朝6動画学習室<small>朝6アボジ体操・公式LINE登録者向け</small></span></div>
-    <div class="privacy-note">LINE認証で安全に閲覧</div>
+    <div class="privacy-note" id="privacy-note">公式LINEから限定公開</div>
   </header>
 
   <main class="gate" id="auth-gate" aria-live="polite">
@@ -36,14 +36,14 @@
       <div class="gate-icon" aria-hidden="true"></div>
       <p class="gate-kicker">Members Only Video Library</p>
       <h1 id="gate-title">公式LINE登録者限定<br>動画学習室</h1>
-      <p class="gate-copy" id="gate-copy">アボジ体操公式LINEに登録している方だけが利用できます。LINEの標準認証でご本人確認を行います。</p>
-      <p class="gate-status" id="gate-status" aria-busy="true">認証の準備をしています</p>
+      <p class="gate-copy" id="gate-copy">朝6アボジ体操公式LINEからご案内している、動画学習ページです。</p>
+      <p class="gate-status" id="gate-status" aria-busy="true">動画を準備しています</p>
       <div class="gate-actions">
         <button class="gate-button primary" id="login-button" type="button" hidden>LINEで本人確認</button>
         <a class="gate-button primary" id="friend-button" href="https://lin.ee/XZ9COtS" target="_blank" rel="noopener noreferrer" hidden>公式LINEを友だち追加</a>
         <button class="gate-button" id="retry-button" type="button" hidden>登録状態を再確認</button>
       </div>
-      <p class="gate-help"><strong>PC・Mac・iPadにも対応。</strong><br>LINE側のWebログインやQRコード認証が表示される場合があります。</p>
+      <p class="gate-help" id="gate-help"><strong>公式LINEのリッチメニューからお入りください。</strong><br>初回確認後は、この端末で30日間そのまま閲覧できます。</p>
     </section>
   </main>
 
@@ -65,7 +65,6 @@
   </div>
 
   <div class="toast" id="toast" role="status" hidden></div>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
     (() => {
       "use strict";
@@ -81,6 +80,8 @@
       const gateTitle = document.getElementById("gate-title");
       const gateCopy = document.getElementById("gate-copy");
       const gateStatus = document.getElementById("gate-status");
+      const gateHelp = document.getElementById("gate-help");
+      const privacyNote = document.getElementById("privacy-note");
       const loginButton = document.getElementById("login-button");
       const friendButton = document.getElementById("friend-button");
       const retryButton = document.getElementById("retry-button");
@@ -111,6 +112,15 @@
         loginButton.hidden = true;
         friendButton.hidden = false;
         retryButton.hidden = false;
+      }
+
+      function showLinkRequired() {
+        gateTitle.textContent = "公式LINEからお入りください";
+        gateCopy.textContent = "このページは、朝6アボジ体操公式LINEのリッチメニューからご利用いただけます。";
+        setStatus("この端末の閲覧確認が必要です。", false);
+        loginButton.hidden = true;
+        friendButton.hidden = false;
+        retryButton.hidden = true;
       }
 
       function showLogin() {
@@ -268,6 +278,18 @@
         });
       }
 
+      function loadLiffSdk() {
+        if (window.liff) return Promise.resolve();
+        return new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = "https://static.line-scdn.net/liff/edge/2/sdk.js";
+          script.async = true;
+          script.onload = resolve;
+          script.onerror = () => reject(new Error("LINE認証機能を読み込めませんでした。"));
+          document.head.append(script);
+        });
+      }
+
       function createPlayers(seriesList) {
         seriesList.forEach(series => {
           if (!series.items.length) return;
@@ -297,9 +319,10 @@
         });
       }
 
-      async function unlockVideos(token) {
-        setStatus("登録状態と動画を確認しています", true);
-        const payload = await fetchJson("/api/videos", { headers: { Authorization: `Bearer ${token}` } });
+      async function unlockVideos(token = "") {
+        setStatus(token ? "登録状態と動画を確認しています" : "動画一覧を読み込んでいます", true);
+        const options = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+        const payload = await fetchJson("/api/videos", options);
         if (!Array.isArray(payload.series) || payload.series.length !== 3) throw new Error("動画情報の形式が正しくありません。");
         payload.series.forEach(renderSeries);
         await loadYouTubeApi();
@@ -310,10 +333,17 @@
       }
 
       async function authenticate() {
-        if (!window.liff) throw new Error("LINE認証機能を読み込めませんでした。");
         config = await fetchJson("/api/config");
-        if (!config.liffId) throw new Error("LINE認証の設定が完了していません。");
         if (config.lineAddFriendUrl) friendButton.href = config.lineAddFriendUrl;
+        if (config.accessMode === "link") {
+          privacyNote.textContent = "公式LINEから限定公開";
+          gateHelp.innerHTML = "<strong>公式LINEのリッチメニューから限定公開。</strong><br>初回確認後は、この端末で30日間そのまま閲覧できます。";
+          await unlockVideos();
+          return;
+        }
+        await loadLiffSdk();
+        if (!window.liff) throw new Error("LINE認証機能を読み込めませんでした。");
+        if (!config.liffId) throw new Error("LINE認証の設定が完了していません。");
         await liff.init({ liffId: config.liffId });
         if (!liff.isLoggedIn()) {
           showLogin();
@@ -331,6 +361,7 @@
       }
 
       loginButton.addEventListener("click", () => {
+        if (!window.liff) return showError("LINE認証機能を読み込めませんでした。");
         loginButton.disabled = true;
         setStatus("LINEのログイン画面へ移動します", true);
         liff.login({ redirectUri: window.location.href.split("#")[0] });
@@ -338,7 +369,8 @@
       retryButton.addEventListener("click", () => window.location.reload());
 
       authenticate().catch(error => {
-        if (error.status === 403) showNotFriend();
+        if (error.status === 403 && config?.accessMode === "link") showLinkRequired();
+        else if (error.status === 403) showNotFriend();
         else showError(error.message || "認証処理でエラーが発生しました。");
       });
     })();
