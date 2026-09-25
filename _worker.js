@@ -5,6 +5,7 @@ const PLAYLIST_CACHE_SECONDS = 900;
 const MAX_PLAYLIST_PAGES = 10;
 const VIDEO_COOKIE_NAME = "__Host-aboji_video_access";
 const VIDEO_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+const LATEST_VIDEO_KEY = "latest-video.mp4";
 
 const SERIES = [
   { key: "tutorial", title: "チュートリアル", envKey: "YT_PLAYLIST_TUTORIAL" },
@@ -78,6 +79,11 @@ async function createAccessCookie(secret) {
   return `${payload}.${signature}`;
 }
 
+async function createAccessCookieHeader(secret) {
+  const cookie = await createAccessCookie(secret);
+  return `${VIDEO_COOKIE_NAME}=${cookie}; Max-Age=${VIDEO_COOKIE_MAX_AGE}; Path=/; Secure; HttpOnly; SameSite=Lax`;
+}
+
 async function hasValidAccessCookie(request, secret) {
   const cookie = getCookie(request, VIDEO_COOKIE_NAME);
   const parts = cookie.split(".");
@@ -131,12 +137,11 @@ async function handleVideoPage(request, env) {
   const url = new URL(request.url);
   const entry = url.searchParams.get("entry") || "";
   if (await matchesEntryToken(entry, secret)) {
-    const cookie = await createAccessCookie(secret);
     return new Response(null, {
       status: 302,
       headers: {
         "Location": "/videos",
-        "Set-Cookie": `${VIDEO_COOKIE_NAME}=${cookie}; Max-Age=${VIDEO_COOKIE_MAX_AGE}; Path=/; Secure; HttpOnly; SameSite=Lax`,
+        "Set-Cookie": await createAccessCookieHeader(secret),
         "Cache-Control": "private, no-store, max-age=0",
         "Referrer-Policy": "strict-origin-when-cross-origin"
       }
@@ -148,6 +153,109 @@ async function handleVideoPage(request, env) {
   assetUrl.pathname = "/videos";
   assetUrl.search = "";
   return env.ASSETS.fetch(new Request(assetUrl, { method: request.method, headers: request.headers }));
+}
+
+function parseByteRange(value, size) {
+  if (!value || !/^bytes=/i.test(value)) return null;
+  const match = /^bytes=(\d*)-(\d*)$/i.exec(value.trim());
+  if (!match || (!match[1] && !match[2]) || size <= 0) return { invalid: true };
+
+  if (!match[1]) {
+    const suffixLength = Number(match[2]);
+    if (!Number.isSafeInteger(suffixLength) || suffixLength <= 0) return { invalid: true };
+    const length = Math.min(suffixLength, size);
+    return { offset: size - length, length };
+  }
+
+  const offset = Number(match[1]);
+  const requestedEnd = match[2] ? Number(match[2]) : size - 1;
+  if (!Number.isSafeInteger(offset) || !Number.isSafeInteger(requestedEnd) || offset >= size || requestedEnd < offset) {
+    return { invalid: true };
+  }
+  const end = Math.min(requestedEnd, size - 1);
+  return { offset, length: end - offset + 1 };
+}
+
+function isSameOriginRequest(request) {
+  const origin = request.headers.get("Origin");
+  return !origin || origin === new URL(request.url).origin;
+}
+
+function videoUnavailable(status = 404) {
+  return json({ message: "最新動画は現在準備中です。" }, status);
+}
+
+async function handleLatestVideo(request, env) {
+  if (request.method !== "GET" && request.method !== "HEAD") return json({ message: "Method Not Allowed" }, 405);
+  if (!isSameOriginRequest(request)) return json({ message: "許可されていないアクセスです。" }, 403);
+
+  const secret = String(env.VIDEO_ACCESS_TOKEN || "").trim();
+  if (!secret || !await hasValidAccessCookie(request, secret)) {
+    return json({ message: "動画ページから再生してください。" }, 403);
+  }
+  const bucket = env.VIDEO_BUCKET;
+  if (!bucket || typeof bucket.head !== "function" || typeof bucket.get !== "function") return videoUnavailable(503);
+
+  let metadata;
+  try {
+    metadata = await bucket.head(LATEST_VIDEO_KEY);
+  } catch (_) {
+    return videoUnavailable(503);
+  }
+  if (!metadata) return videoUnavailable(404);
+
+  const headers = new Headers();
+  if (typeof metadata.writeHttpMetadata === "function") metadata.writeHttpMetadata(headers);
+  const etag = metadata.httpEtag || "";
+  if (etag) headers.set("ETag", etag);
+  headers.set("Content-Type", "video/mp4");
+  headers.set("Content-Disposition", 'inline; filename="latest-video.mp4"');
+  headers.set("Accept-Ranges", "bytes");
+  headers.set("Cache-Control", "private, no-store, max-age=0");
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("Referrer-Policy", "same-origin");
+  headers.set("Vary", "Cookie");
+
+  if (request.method === "HEAD") {
+    headers.set("Content-Length", String(metadata.size));
+    return new Response(null, { status: 200, headers });
+  }
+
+  let rangeHeader = request.headers.get("Range");
+  const ifRange = request.headers.get("If-Range");
+  if (rangeHeader && ifRange && ifRange !== etag) rangeHeader = "";
+  const range = parseByteRange(rangeHeader, metadata.size);
+  if (range?.invalid) {
+    headers.set("Content-Range", `bytes */${metadata.size}`);
+    return new Response(null, { status: 416, headers });
+  }
+
+  let object;
+  try {
+    object = range
+      ? await bucket.get(LATEST_VIDEO_KEY, { range: { offset: range.offset, length: range.length } })
+      : await bucket.get(LATEST_VIDEO_KEY);
+  } catch (_) {
+    return videoUnavailable(503);
+  }
+  if (!object?.body) return videoUnavailable(404);
+  if (typeof object.writeHttpMetadata === "function") object.writeHttpMetadata(headers);
+  if (etag) headers.set("ETag", etag);
+  headers.set("Content-Type", "video/mp4");
+  headers.set("Content-Disposition", 'inline; filename="latest-video.mp4"');
+  headers.set("Accept-Ranges", "bytes");
+  headers.set("Cache-Control", "private, no-store, max-age=0");
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("Referrer-Policy", "same-origin");
+  headers.set("Vary", "Cookie");
+
+  if (range) {
+    headers.set("Content-Range", `bytes ${range.offset}-${range.offset + range.length - 1}/${metadata.size}`);
+    headers.set("Content-Length", String(range.length));
+    return new Response(object.body, { status: 206, headers });
+  }
+  headers.set("Content-Length", String(metadata.size));
+  return new Response(object.body, { status: 200, headers });
 }
 
 function isSameOrigin(request) {
@@ -301,7 +409,13 @@ async function handleVideos(request, env, context) {
       ...item,
       items: await fetchPlaylistItems(context, item.playlistId, settings.apiKey)
     })));
-    return json({ series, refreshedWithinSeconds: PLAYLIST_CACHE_SECONDS });
+    const response = json({ series, refreshedWithinSeconds: PLAYLIST_CACHE_SECONDS });
+    if (getAccessMode(env) === "line") {
+      const secret = String(env.VIDEO_ACCESS_TOKEN || "").trim();
+      if (!secret) return json({ message: "動画配信の保護設定が完了していません。" }, 503);
+      response.headers.set("Set-Cookie", await createAccessCookieHeader(secret));
+    }
+    return response;
   } catch (error) {
     if (error?.status === 403) return json({ message: "YouTube動画の取得権限を確認してください。" }, 502);
     if (error?.status === 429) return json({ message: "動画一覧が混み合っています。時間をおいてお試しください。" }, 503);
@@ -315,6 +429,7 @@ export default {
     if (pathname === "/videos" || pathname === "/videos.html") return handleVideoPage(request, env);
     if (pathname === "/api/config") return handleConfig(request, env);
     if (pathname === "/api/videos") return handleVideos(request, env, context);
+    if (pathname === "/media/latest-video") return handleLatestVideo(request, env);
     return env.ASSETS.fetch(request);
   }
 };
