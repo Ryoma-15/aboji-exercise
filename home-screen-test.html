@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071724">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="アボジ体操">
+  <title>ホーム画面追加テスト｜アボジ体操</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="./app-icon-180.png">
+  <style>
+    :root{
+      --deep:#071724;--navy:#11283d;--gold:#d1ad68;--gold2:#ebd3a0;
+      --paper:#f8f5ee;--ink:#132638;--muted:#63717b;--line:rgba(19,38,56,.15);
+      --round:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;min-height:100svh;color:white;font-family:var(--round);
+      background:
+        radial-gradient(circle at 50% 24%,rgba(72,154,188,.28),transparent 27%),
+        linear-gradient(145deg,#061724,#123750 70%,#0e2a3f);
+    }
+    .wrap{width:min(100% - 32px,720px);margin:auto;padding:calc(36px + env(safe-area-inset-top)) 0 calc(38px + env(safe-area-inset-bottom))}
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:42px}
+    .brand img{width:50px;height:50px;border-radius:14px}
+    .brand strong{font-size:16px;letter-spacing:.04em}
+    .card{padding:clamp(26px,7vw,48px);border:1px solid rgba(235,211,160,.42);background:rgba(6,23,36,.74);box-shadow:0 24px 75px rgba(0,0,0,.28);backdrop-filter:blur(16px)}
+    .kicker{margin:0 0 10px;color:var(--gold2);font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
+    h1{margin:0;font-size:clamp(30px,8vw,49px);line-height:1.32;font-weight:700}
+    .lead{margin:18px 0 0;color:#d0dbe0;font-size:15px;line-height:1.9}
+    .button{width:100%;margin-top:27px;min-height:58px;border:0;border-radius:12px;background:var(--gold);color:#071724;font:800 16px/1.4 var(--round);cursor:pointer;padding:15px 18px}
+    .button.secondary{margin-top:11px;background:transparent;color:white;border:1px solid rgba(255,255,255,.30)}
+    .note{margin:16px 0 0;color:#9fb0ba;font-size:12px;line-height:1.75}
+    .status{margin-top:24px;padding:16px 18px;border-radius:12px;background:rgba(255,255,255,.07);font-size:13px;line-height:1.75}
+    .success{border:1px solid rgba(209,173,104,.65);background:rgba(209,173,104,.10)}
+    dialog{width:min(calc(100% - 24px),520px);border:0;border-radius:20px;padding:0;background:white;color:var(--ink);box-shadow:0 30px 90px rgba(0,0,0,.45)}
+    dialog::backdrop{background:rgba(2,11,18,.72);backdrop-filter:blur(5px)}
+    .sheet{padding:26px 22px 22px}
+    .sheet h2{margin:0 0 6px;font-size:23px}
+    .sheet p{margin:0;color:var(--muted);line-height:1.7;font-size:14px}
+    .steps{display:grid;gap:12px;margin:21px 0}
+    .step{display:grid;grid-template-columns:42px 1fr;gap:12px;align-items:center;padding:13px;border:1px solid var(--line);border-radius:14px}
+    .num{width:38px;height:38px;display:grid;place-items:center;border-radius:50%;background:var(--navy);color:white;font-weight:800}
+    .share-icon{font-size:24px;line-height:1}
+    .step strong{display:block;margin-bottom:2px;font-size:14px}
+    .step span{font-size:12px;color:var(--muted);line-height:1.55}
+    .close{width:100%;min-height:50px;border:0;border-radius:10px;background:var(--navy);color:white;font-weight:800;font-size:15px}
+    .ios-tip{margin-top:12px!important;padding:12px 14px;border-radius:10px;background:#f5f2eb;color:#485760!important}
+    [hidden]{display:none!important}
+    @media(max-width:480px){.wrap{width:min(100% - 24px,720px)}.brand{margin-bottom:27px}.card{padding:28px 20px}h1{font-size:34px}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="brand">
+      <img src="./app-icon-192.png" alt="">
+      <strong>アボジ体操</strong>
+    </div>
+
+    <section class="card">
+      <p class="kicker">Home Screen Test</p>
+      <h1>ホーム画面から<br>すぐ開けるように。</h1>
+      <p class="lead">
+        「アボジ体操」をホーム画面に追加すると、次回からアプリのようにアイコンを押すだけで開けます。
+        このページはホーム画面追加機能のテスト用です。
+      </p>
+
+      <div id="installed-status" class="status success" hidden>
+        ✓ ホーム画面から起動されています。テスト成功です。
+      </div>
+
+      <div id="browser-status" class="status">
+        お使いの端末を確認しています…
+      </div>
+
+      <button id="install-button" class="button" type="button">ホーム画面に追加する</button>
+      <button id="check-button" class="button secondary" type="button">追加できたか確認する</button>
+      <p class="note">
+        iPhone / iPadでは、Webサイト側から「ホーム画面に追加」を自動実行することはできません。
+        ボタンを押すと、端末に合わせて最短の手順をご案内します。
+      </p>
+    </section>
+  </main>
+
+  <dialog id="ios-dialog">
+    <div class="sheet">
+      <h2>iPhoneに追加する</h2>
+      <p>Safariで次の3つだけ操作してください。</p>
+      <div class="steps">
+        <div class="step">
+          <div class="num share-icon">↥</div>
+          <div><strong>1. 「共有」をタップ</strong><span>Safariの共有ボタン（四角から上向き矢印）を押します。</span></div>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <div><strong>「ホーム画面に追加」</strong><span>メニューを下へスクロールして選びます。</span></div>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <div><strong>右上の「追加」</strong><span>ホーム画面に「アボジ体操」のアイコンが作られます。</span></div>
+        </div>
+      </div>
+      <p class="ios-tip">追加後はいったんSafariを閉じ、ホーム画面の「アボジ体操」アイコンからこのページを開いてください。「テスト成功」と表示されます。</p>
+      <button class="close" id="close-dialog" type="button">わかりました</button>
+    </div>
+  </dialog>
+
+  <script>
+  (() => {
+    "use strict";
+
+    const ua = navigator.userAgent || "";
+    const isIOS = /iPhone|iPad|iPod/i.test(ua) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isLine = /Line\//i.test(ua);
+    const standalone = window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true;
+
+    const installBtn = document.getElementById("install-button");
+    const checkBtn = document.getElementById("check-button");
+    const status = document.getElementById("browser-status");
+    const installed = document.getElementById("installed-status");
+    const dlg = document.getElementById("ios-dialog");
+    const closeDlg = document.getElementById("close-dialog");
+
+    let deferredPrompt = null;
+
+    function renderState() {
+      const nowStandalone = window.matchMedia("(display-mode: standalone)").matches ||
+        window.navigator.standalone === true;
+
+      if (nowStandalone) {
+        installed.hidden = false;
+        status.textContent = "ホーム画面のアイコンから起動中です。";
+        installBtn.hidden = true;
+        checkBtn.hidden = true;
+        return;
+      }
+
+      installed.hidden = true;
+      installBtn.hidden = false;
+      checkBtn.hidden = false;
+
+      if (isLine && isIOS) {
+        status.innerHTML = "iPhoneのLINE内ブラウザで開いています。まず右上などのメニューから<strong>「Safariで開く」</strong>を選んでください。";
+      } else if (isIOS) {
+        status.textContent = "iPhone / iPadを検出しました。下のボタンから追加手順を確認できます。";
+      } else {
+        status.textContent = "ホーム画面・アプリとして追加できるかブラウザを確認しています。";
+      }
+    }
+
+    window.addEventListener("beforeinstallprompt", e => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (!isIOS) {
+        status.textContent = "この端末では、ボタンから直接インストールできます。";
+      }
+    });
+
+    window.addEventListener("appinstalled", () => {
+      deferredPrompt = null;
+      status.textContent = "追加できました。ホーム画面またはアプリ一覧から「アボジ体操」を開いてください。";
+    });
+
+    installBtn.addEventListener("click", async () => {
+      if (standalone) return;
+
+      if (isIOS) {
+        if (typeof dlg.showModal === "function") dlg.showModal();
+        else dlg.setAttribute("open", "");
+        return;
+      }
+
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        return;
+      }
+
+      status.textContent = "ブラウザのメニューから「アプリをインストール」または「ホーム画面に追加」を選んでください。";
+    });
+
+    closeDlg.addEventListener("click", () => dlg.close());
+    checkBtn.addEventListener("click", () => {
+      renderState();
+      if (!(window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true) && isIOS) {
+        if (typeof dlg.showModal === "function") dlg.showModal();
+      }
+    });
+
+    window.matchMedia("(display-mode: standalone)").addEventListener?.("change", renderState);
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    }
+
+    renderState();
+  })();
+  </script>
+</body>
+</html>
