@@ -4,7 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <meta name="referrer" content="no-referrer">
+  <!-- YouTube embeds require a referrer in some in-app browsers (notably LINE). -->
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="theme-color" content="#071724">
   <meta name="description" content="アボジ体操公式LINE登録者向けの動画学習ページです。">
   <title>朝6動画学習室｜アボジ体操</title>
@@ -295,7 +296,6 @@
           if (!series.items.length) return;
           const player = new YT.Player(`player-${series.key}`, {
             videoId: series.items[0].id,
-            host: "https://www.youtube-nocookie.com",
             playerVars: {
               listType: "playlist",
               list: series.playlistId,
@@ -307,6 +307,13 @@
             },
             events: {
               onReady: () => setActive(series.key, series.items[0].playlistIndex),
+              onError: event => {
+                const code = Number(event.data);
+                const message = code === 153
+                  ? "LINE内ブラウザでYouTubeの埋め込みを確認できませんでした。ページを再読み込みしてください。"
+                  : "この動画を再生できませんでした。別の動画をお試しください。";
+                showToast(message);
+              },
               onStateChange: event => {
                 if (event.data === YT.PlayerState.PLAYING || event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.CUED) {
                   const current = event.target.getPlaylistIndex();

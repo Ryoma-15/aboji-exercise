@@ -16,7 +16,7 @@ const JSON_HEADERS = {
   "Content-Type": "application/json; charset=utf-8",
   "Cache-Control": "private, no-store, max-age=0",
   "X-Content-Type-Options": "nosniff",
-  "Referrer-Policy": "no-referrer"
+  "Referrer-Policy": "strict-origin-when-cross-origin"
 };
 
 function json(body, status = 200) {
@@ -115,7 +115,7 @@ function accessDeniedPage(status = 403) {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "private, no-store, max-age=0",
       "X-Robots-Tag": "noindex, nofollow, noarchive",
-      "Referrer-Policy": "no-referrer",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
       "X-Frame-Options": "DENY",
       "X-Content-Type-Options": "nosniff"
     }
@@ -138,7 +138,7 @@ async function handleVideoPage(request, env) {
         "Location": "/videos",
         "Set-Cookie": `${VIDEO_COOKIE_NAME}=${cookie}; Max-Age=${VIDEO_COOKIE_MAX_AGE}; Path=/; Secure; HttpOnly; SameSite=Lax`,
         "Cache-Control": "private, no-store, max-age=0",
-        "Referrer-Policy": "no-referrer"
+        "Referrer-Policy": "strict-origin-when-cross-origin"
       }
     });
   }

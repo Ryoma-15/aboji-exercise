@@ -1,13 +1,13 @@
 /videos.html
   X-Robots-Tag: noindex, nofollow, noarchive
   X-Frame-Options: DENY
-  Referrer-Policy: no-referrer
+  Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
 
 /videos
   X-Robots-Tag: noindex, nofollow, noarchive
   X-Frame-Options: DENY
-  Referrer-Policy: no-referrer
+  Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
 
 /api/*
