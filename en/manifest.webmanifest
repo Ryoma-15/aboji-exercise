@@ -1,0 +1,15 @@
+{
+  "id": "/en/members",
+  "name": "Aboji Exercise · Morning 6",
+  "short_name": "Aboji Exercise",
+  "description": "Your Aboji Exercise member practice space",
+  "start_url": "/en/members",
+  "scope": "/en/",
+  "display": "standalone",
+  "background_color": "#081a29",
+  "theme_color": "#081a29",
+  "icons": [
+    { "src": "/en/app-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/en/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

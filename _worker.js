@@ -6,6 +6,8 @@ const MAX_PLAYLIST_PAGES = 10;
 const VIDEO_COOKIE_NAME = "__Host-aboji_video_access";
 const VIDEO_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 const LATEST_VIDEO_KEY = "latest-video.mp4";
+const EN_COOKIE = "__Host-aboji_en_session";
+const EN_SESSION_SECONDS = 60 * 60 * 24 * 30;
 
 const SERIES = [
   { key: "tutorial", title: "チュートリアル", envKey: "YT_PLAYLIST_TUTORIAL" },
@@ -22,6 +24,202 @@ const JSON_HEADERS = {
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
+}
+
+const epoch = () => Math.floor(Date.now() / 1000);
+function japanDateStamp() {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date()).map(part => [part.type, part.value]));
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+const randomToken = () => toBase64Url(crypto.getRandomValues(new Uint8Array(32)));
+async function hashToken(token) {
+  return toBase64Url(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token))));
+}
+function noIndex(response) {
+  const headers = new Headers(response.headers);
+  headers.set("Cache-Control", "private, no-store");
+  headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+  headers.set("Referrer-Policy", "no-referrer");
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+async function parseEnBody(request) {
+  if (Number(request.headers.get("Content-Length") || 0) > 8192) return null;
+  try {
+    const data = await request.json();
+    return data && typeof data === "object" && JSON.stringify(data).length <= 8192 ? data : null;
+  } catch (_) { return null; }
+}
+function field(value, max = 150) {
+  return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+function enEmail(value) {
+  const email = field(value, 254).toLowerCase();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : "";
+}
+function urlFor(request, path, token) {
+  const url = new URL(path, request.url);
+  url.searchParams.set("token", token);
+  return url.toString();
+}
+async function enMember(request, env) {
+  if (!env.REG_DB) return null;
+  const token = getCookie(request, EN_COOKIE);
+  if (!/^[\w-]{30,100}$/.test(token)) return null;
+  const hash = await hashToken(token);
+  return env.REG_DB.prepare(
+    "SELECT r.id, r.email, r.full_name FROM en_sessions s JOIN en_registrations r ON r.id=s.registration_id WHERE s.token_hash=? AND s.expires_at>? AND r.status='approved'"
+  ).bind(hash, epoch()).first();
+}
+async function handleEnPage(request, env, pathname) {
+  if (request.method !== "GET" && request.method !== "HEAD") return json({ message: "Method Not Allowed" }, 405);
+  if (["/en/members", "/en/members.html", "/en/install", "/en/install.html"].includes(pathname)) {
+    if (!await enMember(request, env)) return Response.redirect(new URL("/en/?access=required", request.url), 302);
+  }
+  const url = new URL(request.url);
+  url.pathname = pathname.endsWith(".html") ? pathname : pathname === "/en" || pathname === "/en/" ? "/en/index.html" : pathname + ".html";
+  url.search = "";
+  return noIndex(await env.ASSETS.fetch(new Request(url, { method: request.method })));
+}
+async function handleEnApply(request, env) {
+  if (request.method !== "POST") return json({ message: "Method Not Allowed" }, 405);
+  if (!env.REG_DB) return json({ message: "Registration is not yet available." }, 503);
+  if (request.headers.get("Origin") !== new URL(request.url).origin) return json({ message: "Please submit this form from the English Aboji Exercise site." }, 403);
+  const d = await parseEnBody(request);
+  const email = enEmail(d?.email);
+  const name = field(d?.name);
+  const country = field(d?.country, 100);
+  const timezone = field(d?.timezone, 80);
+  const note = field(d?.practiceNote, 900);
+  const kind = field(d?.referralKind, 20);
+  const referrer = field(d?.referrerName, 150);
+  const discovery = field(d?.discovery, 300);
+  const emailUpdates = d?.emailUpdates === true;
+  if (field(d?.website, 200) || !email || !name || !country || !timezone || !["yes","no"].includes(kind)
+    || kind === "yes" && !referrer || kind === "no" && !discovery || d?.consent !== true) {
+    return json({ message: "Please complete all required fields." }, 400);
+  }
+  if (!Number.isFinite(Number(d?.startedAt)) || epoch() - Math.floor(Number(d.startedAt) / 1000) < 3) {
+    return json({ message: "Please take a moment to review the form and try again." }, 400);
+  }
+  const old = await env.REG_DB.prepare("SELECT id,status,submitted_at FROM en_registrations WHERE email=?").bind(email).first();
+  if (old?.status === "approved") return json({ message: "This email address already has member access. Please contact the team if you need help." }, 409);
+  if (old?.status === "pending" && old.submitted_at > epoch() - 86400) {
+    return json({ message: "We already received an application for this email. The team will review it shortly." });
+  }
+  const id = old?.id || crypto.randomUUID();
+  if (old) {
+    await env.REG_DB.prepare("UPDATE en_registrations SET full_name=?,country=?,time_zone=?,practice_note=?,referral_kind=?,referrer_name=?,discovery=?,status='pending',submitted_at=?,reviewed_at=NULL,invite_hash=NULL,invite_expires=NULL,access_hash=NULL,access_expires=NULL WHERE id=?")
+      .bind(name,country,timezone,note,kind,kind==="yes"?referrer:null,kind==="no"?discovery:null,epoch(),id).run();
+  } else {
+    await env.REG_DB.prepare("INSERT INTO en_registrations(id,email,full_name,country,time_zone,practice_note,referral_kind,referrer_name,discovery,status,created_at,submitted_at) VALUES(?,?,?,?,?,?,?, ?,?,'pending',?,?)")
+      .bind(id,email,name,country,timezone,note,kind,kind==="yes"?referrer:null,kind==="no"?discovery:null,epoch(),epoch()).run();
+  }
+  await env.REG_DB.prepare("INSERT INTO en_preferences(registration_id,email_updates_opt_in,email_updates_consented_at,changed_at) VALUES(?,?,?,?) ON CONFLICT(registration_id) DO UPDATE SET email_updates_opt_in=excluded.email_updates_opt_in,email_updates_consented_at=excluded.email_updates_consented_at,changed_at=excluded.changed_at")
+    .bind(id,emailUpdates?1:0,emailUpdates?epoch():null,epoch()).run();
+  if (env.LINE_CHANNEL_ACCESS_TOKEN && env.LINE_ADMIN_USER_ID) {
+    try {
+      const notification = await fetch("https://api.line.me/v2/bot/message/push", {
+        method: "POST", headers: { Authorization: `Bearer ${env.LINE_CHANNEL_ACCESS_TOKEN}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ to: env.LINE_ADMIN_USER_ID, messages: [{ type: "text", text: `New English Aboji Exercise application\n${name} · ${country}\n${email}\n\nReview: ${new URL("/en/admin", request.url).toString()}` }] })
+      });
+      if (!notification.ok) console.warn("LINE application notification failed", notification.status);
+    } catch (_) { /* The dashboard remains authoritative. */ }
+  }
+  return json({ message: "Your application has been received. The team will review it and contact you by email. Please check your spam or promotions folder too." });
+}
+function adminAuthorized(request, env) {
+  const secret = String(env.EN_ADMIN_SECRET || "");
+  return secret.length >= 32 && safeStringEqual(getBearerToken(request), secret);
+}
+async function handleEnAdmin(request, env) {
+  if (!env.REG_DB || !adminAuthorized(request, env)) return json({ message: "Unauthorized" }, 401);
+  if (request.method === "GET") {
+    const rows = await env.REG_DB.prepare("SELECT r.id,r.email,r.full_name,r.country,r.time_zone,r.practice_note,r.referral_kind,r.referrer_name,r.discovery,r.submitted_at,COALESCE(p.email_updates_opt_in,0) AS email_updates_opt_in FROM en_registrations r LEFT JOIN en_preferences p ON p.registration_id=r.id WHERE r.status='pending' ORDER BY r.submitted_at ASC LIMIT 100").all();
+    return json({ applications: rows.results || [] });
+  }
+  if (request.method !== "POST") return json({ message: "Method Not Allowed" }, 405);
+  const d = await parseEnBody(request);
+  if (d?.action === "reissue") {
+    const email = enEmail(d.email);
+    if (!email) return json({ message: "Enter a valid email address." }, 400);
+    const row = await env.REG_DB.prepare("SELECT id,email,full_name FROM en_registrations WHERE email=? AND status='approved'").bind(email).first();
+    if (!row) return json({ message: "No approved member was found for that email." }, 404);
+    const token = randomToken();
+    const hash = await hashToken(token);
+    await env.REG_DB.prepare("UPDATE en_registrations SET access_hash=?,access_expires=? WHERE id=? AND status='approved'").bind(hash,epoch()+604800,row.id).run();
+    const accessUrl = urlFor(request,"/en/access",token);
+    const subject = "Your Aboji Exercise member access link";
+    const body = `Hello ${row.full_name},\n\nHere is a new personal link to your Aboji Exercise member practice space. Open it in the browser you plan to use for your home-screen icon. It expires in 7 days and can be used once:\n\n${accessUrl}\n\nAfter opening it, you can add the Aboji Exercise app icon from the member page. Please do not forward this personal link.\n\nAboji Exercise`;
+    return json({ ok: true,email:row.email,name:row.full_name,accessUrl,subject,body,expiresInDays:7 });
+  }
+  if (!/^[\da-f-]{36}$/i.test(d?.id || "") || !["approve","reject"].includes(d?.action)) return json({ message: "Invalid request." }, 400);
+  const row = await env.REG_DB.prepare("SELECT email,full_name FROM en_registrations WHERE id=? AND status='pending'").bind(d.id).first();
+  if (!row) return json({ message: "Application already reviewed." }, 409);
+  if (d.action === "reject") {
+    await env.REG_DB.prepare("UPDATE en_registrations SET status='rejected',reviewed_at=? WHERE id=? AND status='pending'").bind(epoch(),d.id).run();
+    return json({ ok: true });
+  }
+  const token = randomToken();
+  const hash = await hashToken(token);
+  const updated = await env.REG_DB.prepare("UPDATE en_registrations SET status='approved',reviewed_at=?,access_hash=?,access_expires=? WHERE id=? AND status='pending'").bind(epoch(),hash,epoch()+604800,d.id).run();
+  if (!updated.meta?.changes) return json({ message: "Application already reviewed." }, 409);
+  const accessUrl = urlFor(request, "/en/access", token);
+  const subject = "Your Aboji Exercise application is approved";
+  const body = `Hello ${row.full_name},\n\nYour application has been approved. Use the personal link below within 7 days to enter your member practice space:\n\n${accessUrl}\n\nThere you can find the Morning 6 Zoom link, practice videos, and guidance for adding the Aboji Exercise app icon to your home screen. Please do not forward this personal link.\n\nWe look forward to practicing with you.\n\nAboji Exercise`;
+  return json({ ok: true, email: row.email, name: row.full_name, accessUrl, subject, body, expiresInDays: 7 });
+}
+async function handleEnAccess(request, env) {
+  if (request.method !== "POST" || !env.REG_DB) return json({ message: "Unavailable" }, 405);
+  const d = await parseEnBody(request);
+  const token = field(d?.token, 100);
+  if (!/^[\w-]{30,100}$/.test(token)) return json({ message: "Invalid access link." }, 400);
+  const session = randomToken();
+  const row = await env.REG_DB.prepare("UPDATE en_registrations SET access_hash=NULL,access_expires=NULL WHERE access_hash=? AND access_expires>? AND status='approved' RETURNING id").bind(await hashToken(token),epoch()).first();
+  if (!row) return json({ message: "This access link has expired or has already been used." }, 410);
+  await env.REG_DB.prepare("INSERT INTO en_sessions(token_hash,registration_id,expires_at) VALUES(?,?,?)").bind(await hashToken(session),row.id,epoch()+EN_SESSION_SECONDS).run();
+  const response = json({ ok: true, next: "/en/members" });
+  response.headers.set("Set-Cookie", `${EN_COOKIE}=${session}; Max-Age=${EN_SESSION_SECONDS}; Path=/; Secure; HttpOnly; SameSite=Lax`);
+  return response;
+}
+async function handleEnMemberApi(request, env, context) {
+  const member = await enMember(request, env);
+  if (!member) return json({ message: "Please enter through your approval email." }, 401);
+  const path = new URL(request.url).pathname;
+  if (path === "/api/en/attendance") {
+    if (request.method === "GET") {
+      const today = japanDateStamp();
+      const count = await env.REG_DB.prepare("SELECT COUNT(*) AS days FROM en_attendance WHERE registration_id=?").bind(member.id).first();
+      const checked = await env.REG_DB.prepare("SELECT 1 AS checked FROM en_attendance WHERE registration_id=? AND practice_date=?").bind(member.id,today).first();
+      return json({ days: count?.days || 0, checkedToday: Boolean(checked), practiceDate: today });
+    }
+    if (request.method !== "POST") return json({ message: "Method Not Allowed" }, 405);
+    if (!isSameOriginRequest(request)) return json({ message: "Please check in from the member page." }, 403);
+    const today = japanDateStamp();
+    await env.REG_DB.prepare("INSERT OR IGNORE INTO en_attendance(registration_id,practice_date,created_at) VALUES(?,?,?)").bind(member.id,today,epoch()).run();
+    const count = await env.REG_DB.prepare("SELECT COUNT(*) AS days FROM en_attendance WHERE registration_id=?").bind(member.id).first();
+    return json({ days: count?.days || 0, checkedToday: true, practiceDate: today });
+  }
+  if (path === "/api/en/member") {
+    if (request.method === "POST") {
+      if (request.headers.get("Origin") !== new URL(request.url).origin) return json({ message: "Please update this setting from the member page." }, 403);
+      const d = await parseEnBody(request);
+      if (typeof d?.emailUpdates !== "boolean") return json({ message: "Invalid email preference." }, 400);
+      await env.REG_DB.prepare("INSERT INTO en_preferences(registration_id,email_updates_opt_in,email_updates_consented_at,changed_at) VALUES(?,?,?,?) ON CONFLICT(registration_id) DO UPDATE SET email_updates_opt_in=excluded.email_updates_opt_in,email_updates_consented_at=excluded.email_updates_consented_at,changed_at=excluded.changed_at")
+        .bind(member.id,d.emailUpdates?1:0,d.emailUpdates?epoch():null,epoch()).run();
+      return json({ emailUpdatesOptIn: d.emailUpdates });
+    }
+    if (request.method !== "GET") return json({ message: "Method Not Allowed" }, 405);
+    const prefs = await env.REG_DB.prepare("SELECT email_updates_opt_in FROM en_preferences WHERE registration_id=?").bind(member.id).first();
+    return json({ name: member.full_name, email: member.email, zoomUrl: env.EN_ZOOM_URL || "", mainSiteUrl: "/", emailUpdatesOptIn: Boolean(prefs?.email_updates_opt_in) });
+  }
+  if (request.method !== "GET") return json({ message: "Method Not Allowed" }, 405);
+  const settings = loadSettings(env);
+  if (!settings) return json({ message: "Video library is currently unavailable." }, 503);
+  try {
+    const englishTitles = { tutorial: "Tutorials", short: "Short practice", message: "A message from Mun Pyeong-rae" };
+    const series = await Promise.all(settings.series.map(async item => ({ ...item, title: englishTitles[item.key] || item.title, items: await fetchPlaylistItems(context,item.playlistId,settings.apiKey) })));
+    return json({ series });
+  } catch (_) { return json({ message: "Video library is currently unavailable." }, 503); }
 }
 
 function getBearerToken(request) {
@@ -190,7 +388,7 @@ async function handleLatestVideo(request, env) {
   if (!isSameOriginRequest(request)) return json({ message: "許可されていないアクセスです。" }, 403);
 
   const secret = String(env.VIDEO_ACCESS_TOKEN || "").trim();
-  if (!secret || !await hasValidAccessCookie(request, secret)) {
+  if ((!secret || !await hasValidAccessCookie(request, secret)) && !await enMember(request, env)) {
     return json({ message: "動画ページから再生してください。" }, 403);
   }
   const bucket = env.VIDEO_BUCKET;
@@ -426,6 +624,11 @@ async function handleVideos(request, env, context) {
 export default {
   async fetch(request, env, context) {
     const pathname = new URL(request.url).pathname;
+    if (["/en", "/en/", "/en/index.html", "/en/apply", "/en/apply.html", "/en/access", "/en/access.html", "/en/admin", "/en/admin.html", "/en/members", "/en/members.html", "/en/install", "/en/install.html"].includes(pathname)) return handleEnPage(request, env, pathname);
+    if (pathname === "/api/en/apply") return handleEnApply(request, env);
+    if (pathname === "/api/en/admin") return handleEnAdmin(request, env);
+    if (pathname === "/api/en/access") return handleEnAccess(request, env);
+    if (["/api/en/member", "/api/en/videos", "/api/en/attendance"].includes(pathname)) return handleEnMemberApi(request, env, context);
     if (pathname === "/videos" || pathname === "/videos.html") return handleVideoPage(request, env);
     if (pathname === "/api/config") return handleConfig(request, env);
     if (pathname === "/api/videos") return handleVideos(request, env, context);
