@@ -80,7 +80,7 @@ async function handleEnPage(request, env, pathname) {
   url.search = "";
   return noIndex(await env.ASSETS.fetch(new Request(url, { method: request.method })));
 }
-async function handleEnApply(request, env) {
+async function handleEnApply(request, env, context) {
   if (request.method !== "POST") return json({ message: "Method Not Allowed" }, 405);
   if (!env.REG_DB) return json({ message: "Registration is not yet available." }, 503);
   if (request.headers.get("Origin") !== new URL(request.url).origin) return json({ message: "Please submit this form from the English Aboji Exercise site." }, 403);
@@ -117,13 +117,18 @@ async function handleEnApply(request, env) {
   await env.REG_DB.prepare("INSERT INTO en_preferences(registration_id,email_updates_opt_in,email_updates_consented_at,changed_at) VALUES(?,?,?,?) ON CONFLICT(registration_id) DO UPDATE SET email_updates_opt_in=excluded.email_updates_opt_in,email_updates_consented_at=excluded.email_updates_consented_at,changed_at=excluded.changed_at")
     .bind(id,emailUpdates?1:0,emailUpdates?epoch():null,epoch()).run();
   if (env.LINE_CHANNEL_ACCESS_TOKEN && env.LINE_ADMIN_USER_ID) {
-    try {
-      const notification = await fetch("https://api.line.me/v2/bot/message/push", {
-        method: "POST", headers: { Authorization: `Bearer ${env.LINE_CHANNEL_ACCESS_TOKEN}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ to: env.LINE_ADMIN_USER_ID, messages: [{ type: "text", text: `New English Aboji Exercise application\n${name} · ${country}\n${email}\n\nReview: ${new URL("/en/admin", request.url).toString()}` }] })
-      });
-      if (!notification.ok) console.warn("LINE application notification failed", notification.status);
-    } catch (_) { /* The dashboard remains authoritative. */ }
+    const notify = (async () => {
+      try {
+        const notification = await fetch("https://api.line.me/v2/bot/message/push", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${env.LINE_CHANNEL_ACCESS_TOKEN}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ to: env.LINE_ADMIN_USER_ID, messages: [{ type: "text", text: `New English Aboji Exercise application\n${name} · ${country}\n${email}\n\nReview: ${new URL("/en/admin", request.url).toString()}` }] }),
+          signal: AbortSignal.timeout(6000)
+        });
+        if (!notification.ok) console.warn("LINE application notification failed", notification.status);
+      } catch (error) { console.warn("LINE application notification failed", error?.message || error); }
+    })();
+    if (context?.waitUntil) context.waitUntil(notify);
   }
   return json({ message: "Your application has been received. The team will review it and contact you by email. Please check your spam or promotions folder too." });
 }
@@ -139,6 +144,20 @@ async function handleEnAdmin(request, env) {
   }
   if (request.method !== "POST") return json({ message: "Method Not Allowed" }, 405);
   const d = await parseEnBody(request);
+  if (d?.action === "preview") {
+    const id = "admin-preview";
+    const now = epoch();
+    await env.REG_DB.prepare("INSERT OR IGNORE INTO en_registrations(id,email,full_name,country,time_zone,status,created_at,reviewed_at) VALUES(?,?,?,?,?,'approved',?,?)")
+      .bind(id,"admin-preview@aboji.local","Administrator","Administration","Asia/Tokyo",now,now).run();
+    await env.REG_DB.prepare("UPDATE en_registrations SET status='approved',full_name='Administrator' WHERE id=?").bind(id).run();
+    const session = randomToken();
+    const maxAge = 60 * 60;
+    await env.REG_DB.prepare("INSERT INTO en_sessions(token_hash,registration_id,expires_at) VALUES(?,?,?)")
+      .bind(await hashToken(session),id,now+maxAge).run();
+    const response = json({ ok: true, next: "/en/members?preview=1" });
+    response.headers.set("Set-Cookie", `${EN_COOKIE}=${session}; Max-Age=${maxAge}; Path=/; Secure; HttpOnly; SameSite=Lax`);
+    return response;
+  }
   if (d?.action === "reissue") {
     const email = enEmail(d.email);
     if (!email) return json({ message: "Enter a valid email address." }, 400);
@@ -625,7 +644,7 @@ export default {
   async fetch(request, env, context) {
     const pathname = new URL(request.url).pathname;
     if (["/en", "/en/", "/en/index.html", "/en/apply", "/en/apply.html", "/en/access", "/en/access.html", "/en/admin", "/en/admin.html", "/en/members", "/en/members.html", "/en/install", "/en/install.html"].includes(pathname)) return handleEnPage(request, env, pathname);
-    if (pathname === "/api/en/apply") return handleEnApply(request, env);
+    if (pathname === "/api/en/apply") return handleEnApply(request, env, context);
     if (pathname === "/api/en/admin") return handleEnAdmin(request, env);
     if (pathname === "/api/en/access") return handleEnAccess(request, env);
     if (["/api/en/member", "/api/en/videos", "/api/en/attendance"].includes(pathname)) return handleEnMemberApi(request, env, context);
