@@ -116,6 +116,10 @@ async function handleEnApply(request, env, context) {
   }
   await env.REG_DB.prepare("INSERT INTO en_preferences(registration_id,email_updates_opt_in,email_updates_consented_at,changed_at) VALUES(?,?,?,?) ON CONFLICT(registration_id) DO UPDATE SET email_updates_opt_in=excluded.email_updates_opt_in,email_updates_consented_at=excluded.email_updates_consented_at,changed_at=excluded.changed_at")
     .bind(id,emailUpdates?1:0,emailUpdates?epoch():null,epoch()).run();
+  if (env.EN_MAIL_WEBHOOK_URL && env.EN_MAIL_WEBHOOK_SECRET) {
+    const delivery=notifyEnEmail(request,env,id).catch(()=>console.warn("English application email failed"));
+    if(context?.waitUntil) context.waitUntil(delivery); else await delivery;
+  }
   if (env.LINE_CHANNEL_ACCESS_TOKEN && env.LINE_ADMIN_USER_ID) {
     const notify = (async () => {
       try {
@@ -132,6 +136,58 @@ async function handleEnApply(request, env, context) {
   }
   return json({ message: "Your application has been received. The team will review it and contact you by email. Please check your spam or promotions folder too." });
 }
+
+async function sendEnMail(env, mail) {
+  if (!env.EN_MAIL_WEBHOOK_URL || !env.EN_MAIL_WEBHOOK_SECRET) return false;
+  const url = new URL(env.EN_MAIL_WEBHOOK_URL);
+  if (url.protocol !== 'https:' || url.hostname !== 'script.google.com') throw new Error('Invalid mail bridge');
+  const response = await fetch(url, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({secret:env.EN_MAIL_WEBHOOK_SECRET,...mail}),signal:AbortSignal.timeout(20000)});
+  const result = await response.json();
+  if (!response.ok || result.ok !== true) throw new Error('Mail delivery failed');
+  return true;
+}
+async function notifyEnEmail(request, env, id) {
+  const row = await env.REG_DB.prepare("SELECT * FROM en_registrations WHERE id=? AND status='pending'").bind(id).first();
+  if (!row) return false;
+  const token = randomToken();
+  await env.REG_DB.prepare('INSERT INTO en_review_tokens(token_hash,registration_id,expires_at) VALUES(?,?,?)').bind(await hashToken(token),id,epoch()+604800).run();
+  return sendEnMail(env,{kind:'application',to:'am6.abonim.exercise@gmail.com',subject:'【アボジ体操】英語参加申請：'+row.full_name,body:`英語の参加申請が届きました。
+
+氏名：${row.full_name}
+メール：${row.email}
+国・地域：${row.country}
+時間帯：${row.time_zone}
+紹介者：${row.referrer_name || 'なし'}
+知ったきっかけ：${row.discovery || '—'}
+備考：${row.practice_note || '—'}
+
+以下から確認・承認できます（7日間有効）。リンクを開くだけでは承認されません。
+${urlFor(request,'/en/review',token)}`});
+}
+async function handleEnReview(request, env) {
+  if (!env.REG_DB) return json({message:'Unavailable'},503);
+  const d = request.method === 'POST' ? await parseEnBody(request) : null;
+  const token = field(request.method === 'GET' ? new URL(request.url).searchParams.get('token') : d?.token,100);
+  if (!/^[\w-]{30,100}$/.test(token)) return json({message:'Invalid review link'},401);
+  const hash = await hashToken(token);
+  const row = await env.REG_DB.prepare("SELECT r.* FROM en_review_tokens t JOIN en_registrations r ON r.id=t.registration_id WHERE t.token_hash=? AND t.expires_at>? AND r.status IN ('pending','held')").bind(hash,epoch()).first();
+  if (!row) return json({message:'リンクは期限切れ、または申請は確認済みです。'},410);
+  if (request.method === 'GET') return json({application:{full_name:row.full_name,email:row.email,country:row.country,time_zone:row.time_zone,referrer_name:row.referrer_name,discovery:row.discovery,practice_note:row.practice_note}});
+  if (request.method !== 'POST') return json({message:'Method Not Allowed'},405);
+  if (request.headers.get('Origin') !== new URL(request.url).origin) return json({message:'Forbidden'},403);
+  if (!['approve','hold','reject'].includes(d?.action)) return json({message:'Invalid action'},400);
+  const internal = new Request(new URL('/api/en/admin',request.url),{method:'POST',headers:{Authorization:'Bearer '+env.EN_ADMIN_SECRET,'Content-Type':'application/json'},body:JSON.stringify({id:row.id,action:d.action})});
+  const response = await handleEnAdmin(internal,env);
+  if (!response.ok) return response;
+  await env.REG_DB.prepare('DELETE FROM en_review_tokens WHERE registration_id=?').bind(row.id).run();
+  const result = await response.json();
+  if (d.action === 'approve') {
+    try { result.mailSent = await sendEnMail(env,{kind:'approval',to:result.email,subject:result.subject,body:result.body}); }
+    catch (_) {result.mailSent=false;}
+  }
+  return json(result);
+}
+
 function adminAuthorized(request, env) {
   const secret = String(env.EN_ADMIN_SECRET || "");
   return secret.length >= 32 && safeStringEqual(getBearerToken(request), secret);
@@ -139,11 +195,22 @@ function adminAuthorized(request, env) {
 async function handleEnAdmin(request, env) {
   if (!env.REG_DB || !adminAuthorized(request, env)) return json({ message: "Unauthorized" }, 401);
   if (request.method === "GET") {
-    const rows = await env.REG_DB.prepare("SELECT r.id,r.email,r.full_name,r.country,r.time_zone,r.practice_note,r.referral_kind,r.referrer_name,r.discovery,r.submitted_at,COALESCE(p.email_updates_opt_in,0) AS email_updates_opt_in FROM en_registrations r LEFT JOIN en_preferences p ON p.registration_id=r.id WHERE r.status='pending' ORDER BY r.submitted_at ASC LIMIT 100").all();
-    return json({ applications: rows.results || [] });
+    const base = "SELECT r.id,r.email,r.full_name,r.country,r.time_zone,r.practice_note,r.referral_kind,r.referrer_name,r.discovery,r.submitted_at,r.reviewed_at,COALESCE(p.email_updates_opt_in,0) AS email_updates_opt_in FROM en_registrations r LEFT JOIN en_preferences p ON p.registration_id=r.id";
+    const [pending, held, approved] = await Promise.all([
+      env.REG_DB.prepare(base + " WHERE r.status='pending' ORDER BY r.submitted_at ASC LIMIT 100").all(),
+      env.REG_DB.prepare(base + " WHERE r.status='held' ORDER BY r.reviewed_at DESC LIMIT 100").all(),
+      env.REG_DB.prepare(base + " WHERE r.status='approved' AND r.id!='admin-preview' ORDER BY r.reviewed_at DESC LIMIT 500").all()
+    ]);
+    return json({ applications: pending.results || [], held: held.results || [], approved: approved.results || [] });
   }
   if (request.method !== "POST") return json({ message: "Method Not Allowed" }, 405);
   const d = await parseEnBody(request);
+  if (d?.action === "notify-pending") {
+    if (!env.EN_MAIL_WEBHOOK_URL || !env.EN_MAIL_WEBHOOK_SECRET) return json({message:"Email connection is not configured."},503);
+    const rows=await env.REG_DB.prepare("SELECT id FROM en_registrations WHERE status='pending' ORDER BY submitted_at LIMIT 100").all();
+    let sent=0;for(const row of rows.results || []) {if(await notifyEnEmail(request,env,row.id)) sent++;}
+    return json({ok:true,sent});
+  }
   if (d?.action === "preview") {
     const id = "admin-preview";
     const now = epoch();
@@ -171,20 +238,58 @@ async function handleEnAdmin(request, env) {
     const body = `Hello ${row.full_name},\n\nHere is a new personal link to your Aboji Exercise member practice space. Open it in the browser you plan to use for your home-screen icon. It expires in 7 days and can be used once:\n\n${accessUrl}\n\nAfter opening it, you can add the Aboji Exercise app icon from the member page. Please do not forward this personal link.\n\nAboji Exercise`;
     return json({ ok: true,email:row.email,name:row.full_name,accessUrl,subject,body,expiresInDays:7 });
   }
-  if (!/^[\da-f-]{36}$/i.test(d?.id || "") || !["approve","reject"].includes(d?.action)) return json({ message: "Invalid request." }, 400);
-  const row = await env.REG_DB.prepare("SELECT email,full_name FROM en_registrations WHERE id=? AND status='pending'").bind(d.id).first();
+  if (!/^[\da-f-]{36}$/i.test(d?.id || "") || !["approve","hold","resume","reject"].includes(d?.action)) return json({ message: "Invalid request." }, 400);
+  const row = await env.REG_DB.prepare("SELECT email,full_name,status FROM en_registrations WHERE id=? AND status IN ('pending','held')").bind(d.id).first();
   if (!row) return json({ message: "Application already reviewed." }, 409);
+  if (d.action === "hold") {
+    await env.REG_DB.prepare("UPDATE en_registrations SET status='held',reviewed_at=? WHERE id=? AND status='pending'").bind(epoch(),d.id).run();
+    return json({ ok: true });
+  }
+  if (d.action === "resume") {
+    await env.REG_DB.prepare("UPDATE en_registrations SET status='pending',reviewed_at=NULL WHERE id=? AND status='held'").bind(d.id).run();
+    return json({ ok: true });
+  }
   if (d.action === "reject") {
-    await env.REG_DB.prepare("UPDATE en_registrations SET status='rejected',reviewed_at=? WHERE id=? AND status='pending'").bind(epoch(),d.id).run();
+    await env.REG_DB.prepare("UPDATE en_registrations SET status='rejected',reviewed_at=? WHERE id=? AND status IN ('pending','held')").bind(epoch(),d.id).run();
     return json({ ok: true });
   }
   const token = randomToken();
   const hash = await hashToken(token);
-  const updated = await env.REG_DB.prepare("UPDATE en_registrations SET status='approved',reviewed_at=?,access_hash=?,access_expires=? WHERE id=? AND status='pending'").bind(epoch(),hash,epoch()+604800,d.id).run();
+  const updated = await env.REG_DB.prepare("UPDATE en_registrations SET status='approved',reviewed_at=?,access_hash=?,access_expires=? WHERE id=? AND status IN ('pending','held')").bind(epoch(),hash,epoch()+604800,d.id).run();
   if (!updated.meta?.changes) return json({ message: "Application already reviewed." }, 409);
   const accessUrl = urlFor(request, "/en/access", token);
-  const subject = "Your Aboji Exercise application is approved";
-  const body = `Hello ${row.full_name},\n\nYour application has been approved. Use the personal link below within 7 days to enter your member practice space:\n\n${accessUrl}\n\nThere you can find the Morning 6 Zoom link, practice videos, and guidance for adding the Aboji Exercise app icon to your home screen. Please do not forward this personal link.\n\nWe look forward to practicing with you.\n\nAboji Exercise`;
+  const subject = "Welcome to Aboji Exercise — Your Member Access Link";
+  const body = `Hello ${row.full_name},
+
+Thank you for applying to join Aboji Exercise.
+
+We are pleased to let you know that your application has been approved. You can now access your personal member page using the link below.
+
+${accessUrl}
+
+Important information about your access link:
+- This is your personal link. Please do not forward or share it with anyone.
+- The link expires in 7 days and can be used only once.
+- Please open it in the browser and on the device you plan to use regularly.
+- After you enter the member area, that browser will remain signed in for up to 30 days.
+- If you change devices, clear your browser data, or lose access, please contact us and we will issue a new link.
+
+On your member page, you can:
+- Join the Morning 6 online Zoom practice
+- Watch Aboji Exercise practice and learning videos
+- Record and review your practice days
+- Add the Aboji Exercise icon to the home screen of your phone, tablet, or computer
+
+Morning 6 is held online every day at 6:00 a.m. Japan time. Please participate at your own pace and according to your physical condition.
+
+The English edition of the Aboji Exercise textbook is currently in production. We will send you more information by email as soon as it is completed.
+
+We hope the member page will support your continued learning and daily practice.
+We look forward to practicing with you.
+
+Warm regards,
+Aboji Exercise
+Morning 6 Aboji Exercise Team`;
   return json({ ok: true, email: row.email, name: row.full_name, accessUrl, subject, body, expiresInDays: 7 });
 }
 async function handleEnAccess(request, env) {
@@ -643,8 +748,16 @@ async function handleVideos(request, env, context) {
 export default {
   async fetch(request, env, context) {
     const pathname = new URL(request.url).pathname;
+    if (pathname === "/en/news" || pathname === "/en/news.html") {
+      const url = new URL(request.url);
+      url.pathname = "/en/news.html";
+      url.search = "";
+      return env.ASSETS.fetch(new Request(url, { method: request.method }));
+    }
     if (["/en", "/en/", "/en/index.html", "/en/apply", "/en/apply.html", "/en/access", "/en/access.html", "/en/admin", "/en/admin.html", "/en/members", "/en/members.html", "/en/install", "/en/install.html"].includes(pathname)) return handleEnPage(request, env, pathname);
     if (pathname === "/api/en/apply") return handleEnApply(request, env, context);
+    if (pathname === "/en/review" || pathname === "/en/review.html") return handleEnPage(request,env,"/en/review.html");
+    if (pathname === "/api/en/review") return handleEnReview(request,env);
     if (pathname === "/api/en/admin") return handleEnAdmin(request, env);
     if (pathname === "/api/en/access") return handleEnAccess(request, env);
     if (["/api/en/member", "/api/en/videos", "/api/en/attendance"].includes(pathname)) return handleEnMemberApi(request, env, context);
