@@ -745,6 +745,338 @@ async function handleVideos(request, env, context) {
   }
 }
 
+/*
+ENGLISH "MY 120 DAYS · WONGU" PRODUCTION ADD-ON FOR THE EXISTING _worker.js
+
+This code is designed to be merged into the existing Cloudflare Pages Worker.
+It intentionally reuses the existing helpers:
+  - enMember(request, env)
+  - json(body, status)
+  - parseEnBody(request)
+  - epoch()
+  - isSameOriginRequest(request)
+
+Binding used:
+  - env.REG_DB  (the same English registration D1 database already in production)
+
+Optional environment variable:
+  - EN_120_START_DATE  (YYYY-MM-DD, default: 2026-10-10)
+
+Add this route inside the existing export default fetch():
+  if (pathname === "/api/en/120") return handleEn120(request, env);
+*/
+
+const EN120_DEFAULT_START = "2026-10-10";
+const EN120_DAYS = 120;
+const EN120_ALLOWED_EVENTS = new Set([
+  "zoom","videos","news","body_check_open","video_play","link"
+]);
+
+function en120TimeZone(value) {
+  const candidate = String(value || "").trim();
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: candidate || "Asia/Tokyo" }).format(new Date());
+    return candidate || "Asia/Tokyo";
+  } catch (_) {
+    return "Asia/Tokyo";
+  }
+}
+
+function en120DateStamp(timeZone, date = new Date()) {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).formatToParts(date).map(p => [p.type, p.value])
+  );
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function en120ValidYmd(value) {
+  const v=String(value||"");
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;
+  const [y,m,d]=v.split('-').map(Number),dt=new Date(Date.UTC(y,m-1,d));
+  return dt.getUTCFullYear()===y&&dt.getUTCMonth()===m-1&&dt.getUTCDate()===d;
+}
+
+function en120Day(startYmd, currentYmd) {
+  const [sy,sm,sd] = startYmd.split("-").map(Number);
+  const [cy,cm,cd] = currentYmd.split("-").map(Number);
+  return Math.floor((Date.UTC(cy,cm-1,cd) - Date.UTC(sy,sm-1,sd)) / 86400000) + 1;
+}
+
+function en120Text(value, max = 180) {
+  return typeof value === "string"
+    ? value.trim().replace(/\s+/g, " ").slice(0, max)
+    : "";
+}
+
+async function en120Context(request, env) {
+  if (!env.REG_DB) return null;
+  const member = await enMember(request, env);
+  if (!member) return null;
+  const profile = await env.REG_DB.prepare(
+    "SELECT country,time_zone FROM en_registrations WHERE id=? AND status='approved'"
+  ).bind(member.id).first();
+  const timeZone = en120TimeZone(profile?.time_zone);
+  const localDate = en120DateStamp(timeZone);
+  const configured = String(env.EN_120_START_DATE || EN120_DEFAULT_START).trim();
+  const challengeStart = en120ValidYmd(configured) ? configured : EN120_DEFAULT_START;
+  const currentDay = en120Day(challengeStart, localDate);
+  return { member, profile: profile || {}, timeZone, localDate, challengeStart, currentDay };
+}
+
+async function en120ActiveChecklist(env, registrationId) {
+  const rows = await env.REG_DB.prepare(
+    `SELECT id,text,source,severity,updated_at
+       FROM en_120_checklist
+      WHERE registration_id=? AND active=1
+      ORDER BY updated_at DESC, created_at DESC
+      LIMIT 500`
+  ).bind(registrationId).all();
+  return rows.results || [];
+}
+
+async function en120MilestoneChecks(env, registrationId) {
+  const rows = await env.REG_DB.prepare(
+    `SELECT id,challenge_day,milestone_day,local_date,item_count,created_at
+       FROM en_120_body_checks
+      WHERE registration_id=? AND milestone_day IS NOT NULL
+      ORDER BY milestone_day ASC`
+  ).bind(registrationId).all();
+  return rows.results || [];
+}
+
+async function en120BodyChecks(env, registrationId) {
+  const rows = await env.REG_DB.prepare(
+    `SELECT id,challenge_day,milestone_day,local_date,item_count,created_at
+       FROM en_120_body_checks
+      WHERE registration_id=?
+      ORDER BY created_at DESC
+      LIMIT 40`
+  ).bind(registrationId).all();
+  return rows.results || [];
+}
+
+function en120MilestoneMap(checks) {
+  const out = {};
+  for (const c of checks) if (c.milestone_day) out[String(c.milestone_day)] = c;
+  return out;
+}
+
+function en120DueMilestone(currentDay, milestones) {
+  if (!milestones["1"]) return 1;
+  if (currentDay >= 40 && !milestones["40"]) return 40;
+  if (currentDay >= 80 && !milestones["80"]) return 80;
+  if (currentDay >= 120 && !milestones["120"]) return 120;
+  return null;
+}
+
+async function en120ReadState(ctx, env, { recordVisit = false } = {}) {
+  const id = ctx.member.id;
+  if (recordVisit && ctx.currentDay >= 1 && ctx.currentDay <= EN120_DAYS) {
+    await env.REG_DB.prepare(
+      `INSERT OR IGNORE INTO en_120_visits(registration_id,visit_date,challenge_day,created_at)
+       VALUES(?,?,?,?)`
+    ).bind(id, ctx.localDate, ctx.currentDay, epoch()).run();
+  }
+
+  const [visits, todayVisit, checklist, checks, milestoneChecks] = await Promise.all([
+    env.REG_DB.prepare("SELECT challenge_day FROM en_120_visits WHERE registration_id=? AND challenge_day BETWEEN 1 AND 120 ORDER BY challenge_day ASC").bind(id).all(),
+    env.REG_DB.prepare("SELECT 1 AS yes FROM en_120_visits WHERE registration_id=? AND visit_date=?").bind(id,ctx.localDate).first(),
+    en120ActiveChecklist(env,id),
+    en120BodyChecks(env,id),
+    en120MilestoneChecks(env,id)
+  ]);
+
+  const visitDays = [...new Set((visits.results || []).map(r => Number(r.challenge_day)).filter(n => Number.isInteger(n) && n >= 1 && n <= 120))];
+  const milestones = en120MilestoneMap(milestoneChecks);
+  return {
+    memberKey: ctx.member.id,
+    displayName: ctx.member.full_name,
+    timeZone: ctx.timeZone,
+    localDate: ctx.localDate,
+    challengeStart: ctx.challengeStart,
+    currentDay: ctx.currentDay,
+    practiceDays: visitDays.length,
+    visitDays,
+    recordedToday: Boolean(todayVisit),
+    checklist,
+    bodyChecks: checks,
+    milestones,
+    bodyCheckDue: en120DueMilestone(ctx.currentDay, milestones)
+  };
+}
+
+async function en120AddManualItem(ctx, env, d) {
+  const text = en120Text(d?.text, 180);
+  if (!text) return json({ message: "Please enter something to add." }, 400);
+  const current = await env.REG_DB.prepare("SELECT COUNT(*) AS n FROM en_120_checklist WHERE registration_id=? AND active=1").bind(ctx.member.id).first();
+  if (Number(current?.n || 0) >= 100) return json({ message: "You can keep up to 100 active body notes." }, 409);
+  const id = crypto.randomUUID();
+  await env.REG_DB.prepare(
+    `INSERT INTO en_120_checklist
+      (id,registration_id,source_key,text,source,severity,active,created_at,updated_at)
+     VALUES(?,?,?,?, 'manual',0,1,?,?)`
+  ).bind(id,ctx.member.id,`manual:${id}`,text,epoch(),epoch()).run();
+  return json(await en120ReadState(ctx,env));
+}
+
+async function en120RemoveItem(ctx, env, d) {
+  const id = en120Text(d?.id, 80);
+  if (!id) return json({ message: "Invalid checklist item." }, 400);
+  await env.REG_DB.prepare(
+    `UPDATE en_120_checklist
+        SET active=0,resolved_at=?,updated_at=?
+      WHERE id=? AND registration_id=?`
+  ).bind(epoch(),epoch(),id,ctx.member.id).run();
+  return json(await en120ReadState(ctx,env));
+}
+
+async function en120SaveBodyCheck(ctx, env, d) {
+  const allowedLabels = {
+    pain: "Pain or soreness", neck_shoulders: "Neck and shoulders", back: "Back and lower back",
+    movement: "Movement", breathing: "Breathing", other: "Other"
+  };
+  const raw = Array.isArray(d?.answers) ? d.answers.slice(0, 6) : [];
+  const answers = raw.map(a => ({
+    key: en120Text(a?.key, 60),
+    label: allowedLabels[en120Text(a?.key, 60)] || "",
+    yes: a?.yes === true,
+    detail: en120Text(a?.detail, 240),
+    severity: Math.max(0,Math.min(4,Math.trunc(Number(a?.severity || 0))))
+  })).filter(a => a.key && a.label);
+
+  if (!answers.length) return json({ message: "No body-check answers were received." }, 400);
+
+  const now = epoch();
+  for (const a of answers) {
+    const sourceKey = `question:${a.key}`;
+    if (a.yes) {
+      const text = a.detail ? `${a.label}: ${a.detail}` : a.label;
+      const existing = await env.REG_DB.prepare(
+        "SELECT id FROM en_120_checklist WHERE registration_id=? AND source_key=?"
+      ).bind(ctx.member.id,sourceKey).first();
+      if (existing?.id) {
+        await env.REG_DB.prepare(
+          `UPDATE en_120_checklist
+              SET text=?,source='questionnaire',severity=?,active=1,resolved_at=NULL,updated_at=?
+            WHERE id=? AND registration_id=?`
+        ).bind(text,a.severity,now,existing.id,ctx.member.id).run();
+      } else {
+        await env.REG_DB.prepare(
+          `INSERT INTO en_120_checklist
+            (id,registration_id,source_key,text,source,severity,active,created_at,updated_at)
+           VALUES(?,?,?,?, 'questionnaire',?,1,?,?)`
+        ).bind(crypto.randomUUID(),ctx.member.id,sourceKey,text,a.severity,now,now).run();
+      }
+    } else {
+      await env.REG_DB.prepare(
+        `UPDATE en_120_checklist
+            SET active=0,resolved_at=?,updated_at=?
+          WHERE registration_id=? AND source_key=? AND source='questionnaire' AND active=1`
+      ).bind(now,now,ctx.member.id,sourceKey).run();
+    }
+  }
+
+  const checklist = await en120ActiveChecklist(env,ctx.member.id);
+  const checksBefore = await en120MilestoneChecks(env,ctx.member.id);
+  const milestones = en120MilestoneMap(checksBefore);
+  const milestone = en120DueMilestone(ctx.currentDay,milestones);
+
+  await env.REG_DB.prepare(
+    `INSERT OR IGNORE INTO en_120_body_checks
+      (id,registration_id,challenge_day,milestone_day,local_date,item_count,answers_json,checklist_json,created_at)
+     VALUES(?,?,?,?,?,?,?,?,?)`
+  ).bind(
+    crypto.randomUUID(),
+    ctx.member.id,
+    Math.max(0,Math.min(EN120_DAYS,ctx.currentDay)),
+    milestone,
+    ctx.localDate,
+    checklist.length,
+    JSON.stringify(answers),
+    JSON.stringify(checklist),
+    now
+  ).run();
+
+  return json(await en120ReadState(ctx,env));
+}
+
+
+async function en120SaveSnapshot(ctx, env) {
+  const now = epoch();
+  const checklist = await en120ActiveChecklist(env,ctx.member.id);
+  const checks = await en120MilestoneChecks(env,ctx.member.id);
+  const milestone = en120DueMilestone(ctx.currentDay,en120MilestoneMap(checks));
+  await env.REG_DB.prepare(
+    `INSERT OR IGNORE INTO en_120_body_checks
+      (id,registration_id,challenge_day,milestone_day,local_date,item_count,answers_json,checklist_json,created_at)
+     VALUES(?,?,?,?,?,?,?,?,?)`
+  ).bind(crypto.randomUUID(),ctx.member.id,Math.max(0,Math.min(EN120_DAYS,ctx.currentDay)),milestone,ctx.localDate,checklist.length,'[]',JSON.stringify(checklist),now).run();
+  return json(await en120ReadState(ctx,env));
+}
+
+async function en120BodyCheckDetail(ctx, env, d) {
+  const id = en120Text(d?.id,80);
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return json({message:"Invalid body record."},400);
+  const row = await env.REG_DB.prepare(
+    `SELECT id,challenge_day,milestone_day,local_date,item_count,answers_json,checklist_json,created_at
+       FROM en_120_body_checks
+      WHERE id=? AND registration_id=?`
+  ).bind(id,ctx.member.id).first();
+  if (!row) return json({message:"Body record not found."},404);
+  return json({record:row});
+}
+
+async function en120Event(ctx, env, d) {
+  const type = en120Text(d?.eventType, 40);
+  if (!EN120_ALLOWED_EVENTS.has(type)) return json({ message: "Unknown event." }, 400);
+  const meta = d?.meta && typeof d.meta === "object" ? JSON.stringify(d.meta).slice(0,2000) : null;
+  await env.REG_DB.prepare(
+    `INSERT INTO en_120_events(registration_id,event_type,event_date,meta_json,created_at)
+     VALUES(?,?,?,?,?)
+     ON CONFLICT(registration_id,event_type,event_date)
+     DO UPDATE SET meta_json=excluded.meta_json,created_at=excluded.created_at`
+  ).bind(ctx.member.id,type,ctx.localDate,meta,epoch()).run();
+  return json({ ok:true });
+}
+
+function en120SameOriginWrite(request) {
+  const target = new URL(request.url).origin;
+  const origin = request.headers.get("Origin");
+  if (origin) return origin === target;
+  const referer = request.headers.get("Referer");
+  if (!referer) return false;
+  try { return new URL(referer).origin === target; } catch (_) { return false; }
+}
+
+async function handleEn120(request, env) {
+  const ctx = await en120Context(request, env);
+  if (!ctx) return json({ message: "Your member session has expired. Please use your personal approval email link." }, 401);
+
+  if (request.method === "GET") {
+    return json(await en120ReadState(ctx,env,{recordVisit:true}));
+  }
+
+  if (request.method !== "POST") return json({ message: "Method Not Allowed" }, 405);
+  if (!en120SameOriginWrite(request)) return json({ message: "Please use this feature from your member page." }, 403);
+  if (!/^application\/json(?:;|$)/i.test(request.headers.get("Content-Type") || "")) return json({ message: "JSON request required." }, 415);
+
+  const d = await parseEnBody(request);
+  if (!d) return json({ message: "Invalid request." }, 400);
+
+  if (d.action === "add-item") return en120AddManualItem(ctx,env,d);
+  if (d.action === "remove-item") return en120RemoveItem(ctx,env,d);
+  if (d.action === "body-check") return en120SaveBodyCheck(ctx,env,d);
+  if (d.action === "snapshot") return en120SaveSnapshot(ctx,env);
+  if (d.action === "body-check-detail") return en120BodyCheckDetail(ctx,env,d);
+  if (d.action === "event") return en120Event(ctx,env,d);
+  return json({ message: "Unknown action." }, 400);
+}
+
 export default {
   async fetch(request, env, context) {
     const pathname = new URL(request.url).pathname;
@@ -760,6 +1092,7 @@ export default {
     if (pathname === "/api/en/review") return handleEnReview(request,env);
     if (pathname === "/api/en/admin") return handleEnAdmin(request, env);
     if (pathname === "/api/en/access") return handleEnAccess(request, env);
+    if (pathname === "/api/en/120") return handleEn120(request, env);
     if (["/api/en/member", "/api/en/videos", "/api/en/attendance"].includes(pathname)) return handleEnMemberApi(request, env, context);
     if (pathname === "/videos" || pathname === "/videos.html") return handleVideoPage(request, env);
     if (pathname === "/api/config") return handleConfig(request, env);

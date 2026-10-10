@@ -1,10 +1,839 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#081a29"><meta name="robots" content="noindex,nofollow,noarchive"><meta name="referrer" content="strict-origin-when-cross-origin"><link rel="manifest" href="/en/manifest.webmanifest"><link rel="icon" href="/en/app-icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/en/app-icon.png"><title>Member practice · Aboji Exercise</title>
-<style>:root{--navy:#081a29;--blue:#102d41;--gold:#d8bb80;--paper:#f5f1e7;--ink:#13283a;--muted:#596a74;--red:#a45b42}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.65 "Avenir Next",Arial,sans-serif}header{background:var(--navy);color:white;padding:16px max(20px,calc((100% - 1080px)/2));display:flex;align-items:center;justify-content:space-between;gap:18px;font-size:12px;font-weight:bold;letter-spacing:.13em}header a{color:inherit;text-decoration:none}nav{display:flex;gap:18px;flex-wrap:wrap;font-size:11px}main{width:min(100% - 32px,1080px);margin:42px auto 90px}h1,h2{font-family:Georgia,serif;font-weight:400}h1{font-size:clamp(38px,7vw,65px);line-height:1.12;margin:10px 0}h2{font-size:clamp(27px,4vw,36px)}p{color:var(--muted)}.tag{font-size:10px;color:var(--red);letter-spacing:.16em;font-weight:800;text-transform:uppercase}.lead{max-width:650px}.welcome{display:flex;justify-content:space-between;align-items:end;gap:25px}.checkin{min-width:205px;padding:18px 20px;background:#fff;border-top:2px solid var(--gold)}.checkin strong{display:block;font:normal 36px/1 Georgia,serif;color:var(--red)}.checkin button{margin-top:12px;padding:10px 13px;border:0;background:var(--navy);color:white;font-weight:700;cursor:pointer}.checkin button:disabled{opacity:.55}.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:32px 0 54px}.action{min-height:124px;padding:22px;background:var(--blue);color:white;text-decoration:none;display:flex;flex-direction:column;justify-content:space-between}.action span{color:var(--gold);font-size:10px;letter-spacing:.13em;text-transform:uppercase}.action strong{font:normal 24px/1.2 Georgia,serif}.schedule{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;background:#102d41;color:white;padding:clamp(24px,5vw,44px);margin:22px 0 62px}.schedule p{color:#c5d6da}.schedule h2{margin:7px 0}.schedule a,.button{display:inline-block;background:var(--gold);padding:13px 18px;color:var(--navy);font-weight:800;text-decoration:none;border:0;cursor:pointer}.video-latest{padding:25px;background:#fff;margin:20px 0 54px;border-top:2px solid var(--gold)}.video-latest video{display:block;width:min(100%,860px);aspect-ratio:16/9;background:#071726}.video-latest[hidden]{display:none}.series{padding:28px 0;border-top:1px solid #c9c9bd}.player{aspect-ratio:16/9;max-width:820px;background:#081a29}.player iframe{width:100%;height:100%;border:0}.items{max-width:820px;display:grid;gap:6px;margin-top:16px}.items button{display:flex;gap:14px;text-align:left;width:100%;padding:13px 15px;border:1px solid #dad5ca;background:white;color:var(--ink);font:inherit;cursor:pointer}.items button.active{border-color:var(--red);background:#efe8da}.items span{color:var(--red);font-size:12px}.install-callout{margin-top:54px;padding:25px;background:#e9e3d7}.install-callout a{color:var(--ink);font-weight:800}.error{color:#9a4038}.footer{margin-top:65px;padding-top:20px;border-top:1px solid #c9c9bd;font-size:12px}@media(max-width:680px){header{align-items:flex-start;flex-direction:column}nav{gap:12px}.welcome{display:block}.checkin{margin-top:24px}.actions{grid-template-columns:1fr}.action{min-height:96px}.schedule{grid-template-columns:1fr}.video-latest{padding:15px}}</style></head>
-<body><header><a href="/en/members">ABOJI EXERCISE · MEMBER PRACTICE</a><nav><a href="/">Main website</a><a href="/en/install">Add the app icon</a></nav></header><main><section class="welcome"><div><div class="tag">Morning 6 · Your practice space</div><h1>Welcome, <span id="name">friend</span>.</h1><p class="lead">Your member space for Morning 6, practice videos, and learning. Move at your own pace, and return whenever you need a guide.</p></div><aside class="checkin"><div class="tag">My practice days</div><strong id="days">—</strong><span>days recorded</span><button id="checkin" type="button">I practiced today</button><p id="checkinMessage" class="muted" role="status"></p></aside></section>
-<div class="actions"><a class="action" href="/"><span>Explore</span><strong>Main website ↗</strong></a><a class="action" id="zoomCard" href="#morning"><span>Meet together</span><strong>Morning 6 · Zoom ↗</strong></a><a class="action" href="#library"><span>Learn & practice</span><strong>Video library ↓</strong></a></div>
-<section class="schedule" id="morning"><div><div class="tag" style="color:var(--gold)">Daily online gathering</div><h2>Morning 6 Aboji Exercise</h2><p>We gather online at 6:00 a.m. Japan Standard Time. Please check the time in your region before joining.</p></div><div id="zoom"><p>Zoom details will be provided by the team.</p></div></section>
-<section id="latest" class="video-latest" hidden><div class="tag">Latest learning video</div><h2>New from Aboji Exercise</h2><video id="latestPlayer" controls playsinline preload="metadata"></video><p>For members. Playback is provided through this site.</p></section>
-<section id="library"><div class="tag">Video learning</div><h2>Practice library</h2><p>Choose a title below the player. Each series follows its current YouTube playlist automatically.</p><div id="series" aria-live="polite">Loading the current videos…</div></section>
-<aside class="install-callout"><div class="tag">Email preference</div><h2>Practice updates</h2><label style="display:flex;gap:10px;align-items:flex-start;color:var(--ink)"><input id="emailUpdates" type="checkbox" style="width:auto;margin-top:6px"> I would like to receive occasional email updates about practice and learning.</label><p id="emailPreferenceStatus" role="status">You can change this choice at any time.</p></aside><aside class="install-callout"><div class="tag">Keep your practice close</div><h2>Add the Aboji Exercise app icon</h2><p>Install a shortcut to this member space on your phone, tablet, or computer home screen. No app-store download is needed.</p><a href="/en/install">See device instructions →</a></aside><footer class="footer">Please keep your personal member access link private. <a href="/en/install">Home-screen guide</a> · <a href="/">Aboji Exercise</a></footer></main>
-<script>(async()=>{const checkbox=document.querySelector("#emailUpdates"),status=document.querySelector("#emailPreferenceStatus");try{const r=await fetch("/api/en/member",{cache:"no-store"}),d=await r.json();if(!r.ok)throw Error(d.message);checkbox.checked=d.emailUpdatesOptIn;checkbox.onchange=async()=>{checkbox.disabled=true;status.textContent="Saving…";try{const response=await fetch("/api/en/member",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({emailUpdates:checkbox.checked})}),result=await response.json();if(!response.ok)throw Error(result.message||"Could not save your choice.");status.textContent=result.emailUpdatesOptIn?"You are opted in to occasional practice email updates.":"You are opted out of practice email updates."}catch(error){checkbox.checked=!checkbox.checked;status.textContent=error.message}finally{checkbox.disabled=false}}}catch(e){checkbox.disabled=true;status.textContent="Could not load your email preference. Please reload the page."}})();</script>
-<script>const holder=document.querySelector("#series");if("serviceWorker" in navigator)navigator.serviceWorker.register("/en/sw.js",{scope:"/en/"}).catch(()=>{});(async()=>{try{const member=await fetch("/api/en/member",{cache:"no-store"});if(!member.ok)throw Error("Your session has expired. Please use your approval email link.");const person=await member.json();document.querySelector("#name").textContent=person.name?.split(" ")[0]||"friend";if(person.zoomUrl&&/^https:\/\//.test(person.zoomUrl)){const a=document.createElement("a");a.href=person.zoomUrl;a.target="_blank";a.rel="noopener noreferrer";a.className="button";a.textContent="Join the Zoom practice ↗";document.querySelector("#zoom").replaceChildren(a);document.querySelector("#zoomCard").href=person.zoomUrl;document.querySelector("#zoomCard").target="_blank";document.querySelector("#zoomCard").rel="noopener noreferrer"}const attendance=await fetch("/api/en/attendance",{cache:"no-store"});if(attendance.ok){const a=await attendance.json();document.querySelector("#days").textContent=a.days;const b=document.querySelector("#checkin");if(a.checkedToday){b.disabled=true;b.textContent="Recorded today ✓";document.querySelector("#checkinMessage").textContent="Your practice for today is recorded (Japan time)."}b.onclick=async()=>{b.disabled=true;try{const r=await fetch("/api/en/attendance",{method:"POST"});const d=await r.json();if(!r.ok)throw Error(d.message);document.querySelector("#days").textContent=d.days;b.textContent="Recorded today ✓";document.querySelector("#checkinMessage").textContent="Your practice for today is recorded (Japan time)."}catch(e){document.querySelector("#checkinMessage").textContent=e.message;b.disabled=false}}}const latest=await fetch("/media/latest-video",{method:"HEAD",cache:"no-store"});if(latest.ok){document.querySelector("#latest").hidden=false;document.querySelector("#latestPlayer").src="/media/latest-video"}const r=await fetch("/api/en/videos",{cache:"no-store"});const d=await r.json();if(!r.ok)throw Error(d.message||"Could not load videos.");holder.replaceChildren();for(const s of d.series){const section=document.createElement("section");section.className="series";const title=document.createElement("h2");title.textContent=s.title;section.append(title);if(!s.items.length){const p=document.createElement("p");p.textContent="Videos for this series are being prepared.";section.append(p)}else{const frame=document.createElement("div");frame.className="player";const iframe=document.createElement("iframe");iframe.title=s.title+" video";iframe.allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";iframe.allowFullscreen=true;iframe.referrerPolicy="strict-origin-when-cross-origin";frame.append(iframe);const items=document.createElement("div");items.className="items";function play(v,index){iframe.src="https://www.youtube-nocookie.com/embed/"+encodeURIComponent(v.id)+"?playsinline=1&rel=0";[...items.children].forEach((x,i)=>x.classList.toggle("active",i===index))}s.items.forEach((v,i)=>{const b=document.createElement("button"),n=document.createElement("span");n.textContent=String(i+1).padStart(2,"0");b.append(n,document.createTextNode(v.title));b.onclick=()=>play(v,i);items.append(b)});section.append(frame,items);play(s.items[0],0)}holder.append(section)}}catch(e){holder.textContent=e.message;holder.className="error"}})();</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#061521">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="no-referrer">
+<link rel="manifest" href="/en/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/en/app-icon.png">
+<title>My 120 Days · Wongu 圓球 · Aboji Exercise</title>
+<style>
+:root{
+  --navy:#061521;--navy2:#0b263a;--paper:#f3f0e8;--ink:#142839;--muted:#64747e;
+  --gold:#edca72;--blue:#72c8ff;--green:#72e1cf;--purple:#b69cff;--line:#d7d4cb;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 "Avenir Next","Segoe UI",Arial,sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+header{background:#071827;color:#fff;padding:14px max(18px,calc((100% - 1240px)/2));display:flex;justify-content:space-between;gap:14px;align-items:center}
+header b{font-size:12px;letter-spacing:.13em}header span{font-size:12px;color:#bdd0da}
+main{width:min(100% - 24px,1240px);margin:24px auto 80px}
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:end;margin-bottom:19px}
+.kicker{font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:900;color:#965743}
+.hero h1{font:400 clamp(38px,6vw,64px)/1.05 Georgia,serif;margin:6px 0 10px}
+.hero p{margin:0;color:var(--muted);max-width:700px}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(145px,1fr));gap:9px;min-width:330px}
+.stat{background:#fff;border-top:2px solid #d7bc7d;padding:13px 15px}
+.stat span{display:block;font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);font-weight:900}
+.stat strong{display:block;font:400 36px/1 Georgia,serif;color:#9a5a46;margin-top:5px}
+.stat small{display:block;color:var(--muted);margin-top:4px}
+.menu{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin:20px 0}
+.menu button{border:0;background:#0b2a40;color:#fff;min-height:103px;padding:17px;text-align:left;display:flex;flex-direction:column;justify-content:space-between}
+.menu span{font-size:10px;color:#d9bf82;letter-spacing:.13em;text-transform:uppercase;font-weight:900}
+.menu strong{font:400 20px/1.18 Georgia,serif}.menu em{font-style:normal;color:#b7ccd7;font-size:11px}
+.layout{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(330px,.55fr);gap:16px;align-items:start}
+.panel{background:#fff;border:1px solid var(--line)}
+.sphere-panel{background:#040d17;border-color:#18354a;color:#fff;overflow:hidden;position:relative}
+.panelhead{padding:18px 20px 0}
+.panelhead h2{font:400 32px/1.15 Georgia,serif;margin:5px 0 7px}
+.panelhead p{margin:0;color:var(--muted)}
+.sphere-panel .panelhead p{color:#a9c0ce}
+.stage{height:620px;position:relative;overflow:hidden}
+canvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+canvas.dragging{cursor:grabbing}
+.sphere-stats{position:absolute;left:14px;top:14px;z-index:8;display:flex;gap:7px}
+.mini{background:#03101fd0;border:1px solid #ffffff25;border-radius:14px;padding:9px 12px;min-width:104px;backdrop-filter:blur(8px)}
+.mini span{display:block;color:#9fb9d7;font-size:10px;font-weight:900;letter-spacing:.08em}
+.mini strong{display:block;font-size:26px;line-height:1.1;margin-top:2px}.mini.practice strong{color:#ffe399}
+.overlay{position:absolute;left:15px;right:15px;bottom:14px;display:flex;justify-content:space-between;align-items:end;gap:10px;z-index:8;pointer-events:none}
+.phasebox{background:#03101fd0;border:1px solid #ffffff20;padding:10px 12px;max-width:72%;backdrop-filter:blur(8px)}
+.phasebox strong{display:block;font-size:15px}.phasebox span{display:block;color:#b7cfdb;font-size:12px;margin-top:2px}
+.info-btn{pointer-events:auto;border:1px solid #b9ddff66;background:#061a2bd9;color:#e9f6ff;padding:9px 12px;border-radius:999px;font-weight:900}
+.side{display:grid;gap:12px}
+.stage-card{padding:18px}
+.stage-card h2{font:400 30px/1.15 Georgia,serif;margin:5px 0 10px}
+.stage-card .big-stage{font-size:18px;font-weight:900;color:#875142;margin:7px 0}
+.stage-card p{color:var(--muted);margin:7px 0}
+.stage-map{display:grid;gap:6px;margin-top:12px}
+.stage-row{display:grid;grid-template-columns:58px 1fr;gap:9px;padding:8px;border-top:1px solid #ebe8df}
+.stage-row:first-child{border-top:0}.stage-row b{color:#825140}.stage-row.active{background:#f4efdf}
+.stage-row.active b{color:#4b3812}
+.stage-row small{display:block;color:var(--muted);margin-top:2px}
+.add-panel{padding:18px}
+.add-panel h2{font:400 28px/1.15 Georgia,serif;margin:5px 0 8px}
+.quick{display:grid;grid-template-columns:1fr auto;gap:7px;margin:10px 0}
+.quick input{min-width:0;padding:10px;border:1px solid #cbc8c0}
+.btn{border:0;padding:10px 13px;font-weight:900}
+.btn.primary{background:#071827;color:#fff}.btn.secondary{background:#ecd58b;color:#3b2d0c}.btn.ghost{background:#ecefed;color:#172c3e}.btn.danger{background:#f3e5e2;color:#8b4338}
+.items{display:grid;gap:0}.item{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 0;border-top:1px solid #e5e2db}.item small{display:block;color:var(--muted)}
+.timeline-panel{margin-top:15px;padding:18px}
+.timeline-panel h2{font:400 29px/1.2 Georgia,serif;margin:5px 0 12px}
+.timeline{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.mile{border:1px solid var(--line);padding:11px}.mile.done{border-top:3px solid #397861}.mile strong{display:block;font:400 20px/1.2 Georgia,serif}.mile span{font-size:11px;color:var(--muted);display:block;margin-top:4px}
+.fake-library{margin-top:15px;padding:18px}.fake-library h2{font:400 29px/1.2 Georgia,serif;margin:5px 0 12px}
+.video-row{display:grid;grid-template-columns:1.4fr 1fr;gap:12px}.screen{aspect-ratio:16/9;background:#071827;color:#cce0e8;display:grid;place-items:center}.vlist{display:grid;gap:6px;align-content:start}.vlist button{text-align:left;padding:9px;border:1px solid var(--line);background:#fff}.vlist button.active{background:#eee7d8;border-color:#bca76f}
+dialog{border:0;padding:0;width:min(700px,calc(100% - 24px));box-shadow:0 26px 90px #0006}
+dialog::backdrop{background:#061521d9}.dhead{background:#071827;color:#fff;padding:17px 19px;display:flex;justify-content:space-between;gap:12px}.dhead h2{font:400 28px/1.2 Georgia,serif;margin:4px 0}.dhead button{width:38px;height:38px;border:1px solid #ffffff45;background:transparent;color:#fff}.dbody{padding:20px}
+.choices{display:flex;gap:8px;margin:15px 0}.choices button{flex:1;border:1px solid #c8c5bd;background:#fff;padding:11px;font-weight:900}.choices button.selected{background:#071827;color:#fff}.detail{display:grid;gap:7px}.detail textarea,.detail select{width:100%;padding:10px;border:1px solid #cac7bf}.detail textarea{min-height:80px}.dialog-actions{display:flex;justify-content:space-between;gap:8px;margin-top:18px}
+/* Persistent member notices, dismissed only by a deliberate tap. */
+.member-notice{display:grid;grid-template-columns:46px minmax(0,1fr) auto;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid #c5ac70;border-left:4px solid #d7b55f;background:linear-gradient(105deg,#fff9e9,#edf5f7);padding:14px 16px;box-shadow:0 5px 20px #0000000d;color:#21374b;cursor:pointer;margin:8px 0 0}
+.member-notice[hidden]{display:none}
+.notice-icon{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#102e43;color:#ffe29c;font-size:21px}
+.notice-body{min-width:0}.notice-label{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#7b6041;font-weight:900}
+.notice-title{display:block;font-size:18px;font-weight:900;line-height:1.3;margin:2px 0}.notice-description{display:block;font-size:13px;color:#496170;line-height:1.55}
+.notice-dismiss{white-space:nowrap;font-size:11px;color:#53677a;font-weight:900}
+.header-right{display:flex;align-items:center;gap:10px}.notice-reopen{background:#18384d;color:#ffe8b5;border:1px solid #8b754d;padding:6px 9px;font-size:11px;font-weight:900}
+/* First visit: put the essential Wongu explanation at the heart of the drawing. */
+.info-btn{position:absolute;z-index:15;right:15px;bottom:14px;left:auto;transform:none;max-width:calc(100% - 30px);box-shadow:0 8px 25px #0006}
+.info-btn.first-guide{top:46%;bottom:auto;left:50%;right:auto;transform:translate(-50%,-50%);width:max-content;max-width:calc(100% - 36px);border:2px solid #ffe29c;background:linear-gradient(145deg,#153b59f5,#071929f5);font-size:clamp(17px,2.2vw,22px);padding:19px 26px;box-shadow:0 0 0 8px #edca7218,0 0 50px #edca7270,0 15px 50px #0009;animation:introBreathe 2.6s ease-in-out infinite}
+.info-btn.first-guide::before{content:'START HERE';display:block;color:#edca72;font-size:10px;letter-spacing:.18em;margin-bottom:5px}
+@keyframes introBreathe{50%{box-shadow:0 0 0 13px #edca7210,0 0 70px #edca727e,0 15px 50px #0009}}
+.tenreki-panel{padding:18px;background:linear-gradient(135deg,#102d46,#081a2d);color:#fff;border-color:#204863}
+.tenreki-panel .kicker{color:#edca72}.tenreki-title{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.tenreki-title h2{font:400 27px/1.2 Georgia,'Noto Serif CJK JP',serif;margin:4px 0 8px}
+.anshi-badge{border:1px solid #edca7299;color:#ffe29c;background:#edca721b;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:900}
+.anshi-badge[hidden]{display:none}.calendar-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;margin-top:10px}
+.calendar-label{font-size:11px;color:#a8c7d9;letter-spacing:.04em;font-weight:900}.calendar-lunar{font-size:21px;color:#ffe5a9;font-weight:900;line-height:1.25;margin:4px 0}
+.calendar-solar{font-size:14px;color:#f1f5f8}.calendar-ganzhi{font-size:12px;color:#bdd9eb;margin-top:8px}
+.moon-display{text-align:center;min-width:104px}.moon-display canvas{display:block;width:88px;height:88px;margin:auto;touch-action:auto;cursor:default}
+.moon-display b{display:block;font-size:12px;color:#d9e7f1}.moon-display small{display:block;font-size:11px;color:#b3cddd}
+.calendar-note{font-size:11px;color:#a8c7d9;margin:11px 0 0;line-height:1.5}
+.principle-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:15px 0}.principle-card{background:#f6f2e7;border-top:2px solid #c6ab6e;padding:12px}.principle-card b{font:400 30px Georgia,serif;color:#8e5d40}.principle-card p{font-size:12px;line-height:1.55;margin:5px 0 0}
+.wongu-info-copy h3{font:400 25px/1.2 Georgia,serif;margin:22px 0 8px}.wongu-info-copy p{margin:8px 0;color:#3b4d59}.wongu-info-copy .soft-note{font-size:12px;color:#67757b;background:#f0f0ed;padding:11px}
+.toast{position:fixed;right:14px;bottom:14px;background:#071827;color:#fff;padding:11px 13px;z-index:200;box-shadow:0 12px 36px #0004}.toast[hidden]{display:none}
+@media(max-width:960px){.hero{grid-template-columns:1fr}.stats{min-width:0}.layout{grid-template-columns:1fr}.stage{height:560px}.menu{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){.member-notice{grid-template-columns:34px minmax(0,1fr);padding:11px 12px;gap:9px}.notice-icon{width:34px;height:34px;font-size:17px}.notice-title{font-size:16px}.notice-dismiss{grid-column:2;font-size:10px}.header-right span{display:none}.tenreki-title h2{font-size:24px}.principle-grid{grid-template-columns:1fr 1fr}.info-btn.first-guide{font-size:18px;padding:17px 18px}.stage{height:500px}.timeline{grid-template-columns:1fr 1fr}.video-row{grid-template-columns:1fr}.menu{grid-template-columns:1fr 1fr}.menu button{min-height:93px}.stats{grid-template-columns:1fr 1fr}.hero h1{font-size:41px}.phasebox{max-width:68%}.sphere-stats{left:9px;top:9px}.mini{min-width:92px;padding:8px 10px}.mini strong{font-size:23px}}
+
+/* Production-only styles */
+[hidden]{display:none!important}
+header{position:relative;z-index:20}
+header a{color:inherit;text-decoration:none}
+header .header-right{flex-wrap:wrap;justify-content:flex-end}
+header .header-right a{font-size:11px;color:#c8dbe8}
+header .header-right a:hover{text-decoration:underline}
+.menu button,.menu a{border:0;background:#0b2a40;color:#fff;min-height:103px;padding:17px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;text-decoration:none}
+.menu button:hover,.menu a:hover{background:#154362}
+.menu a[aria-disabled="true"]{opacity:.6;cursor:not-allowed}
+.stage{height:620px}
+.sphere-panel .panelhead p{max-width:620px}
+.phasebox{max-width:75%}
+.status-line{margin:14px 0;padding:12px 14px;border:1px solid #c8b98f;background:#fff9e9;font-size:13px;color:#514a37}
+.status-line.error{background:#f7e9e6;border-color:#e0b3a6;color:#8c463a}
+.status-line[hidden]{display:none}
+.body-privacy{font-size:11px;color:#667985;margin:9px 0}
+.body-consent{display:flex;gap:9px;align-items:flex-start;font-size:12px;margin:16px 0;color:#43535f}
+.body-consent input{margin-top:4px}
+.dbody .health-note{font-size:12px;color:#63747c;border-top:1px solid #ddd9cf;padding-top:10px}
+.history-list{display:grid;gap:8px}
+.history-entry{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #e1ded7;padding:10px}
+.history-entry strong{font-size:13px}.history-entry small{display:block;color:var(--muted)}
+.history-detail{background:#f7f5ef;border:1px solid #e1ded7;padding:12px;margin-top:12px;max-height:290px;overflow:auto;white-space:pre-wrap;font-size:13px}
+.compare-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:7px;align-items:end}
+.compare-grid select{width:100%;padding:8px;min-width:0}
+.milestone-due{background:#fff8e5;border-left:3px solid #d6ae4c;padding:9px;margin:10px 0;font-size:12px}
+.library{margin-top:15px;padding:18px}
+.library h2{font:400 29px/1.2 Georgia,serif;margin:5px 0 12px}
+.latest{padding:12px;background:#f0ece3;margin:12px 0}
+.latest video{display:block;width:min(100%,820px);aspect-ratio:16/9;background:#061521}
+.series{border-top:1px solid #ddd9cf;margin:20px 0;padding-top:12px}
+.series h3{font:400 22px Georgia,serif}
+.player{width:min(100%,820px);aspect-ratio:16/9;background:#071827}
+.player iframe{width:100%;height:100%;border:0}
+.video-list{display:grid;gap:6px;max-width:820px;margin-top:9px}
+.video-list button{display:flex;gap:10px;text-align:left;border:1px solid #d7d3c8;background:#fff;padding:9px 11px}
+.video-list button.active{background:#efe7d5;border-color:#c4a664}
+.video-list span{color:#8f543f}
+.account{padding:18px;margin-top:15px;background:#eae6dc}
+.account h2{font:400 29px Georgia,serif;margin:4px 0}
+.account label{display:flex;align-items:flex-start;gap:8px;font-size:13px}
+.account p{font-size:12px;color:var(--muted)}
+.footer{padding:20px 0 0;margin:22px 0;border-top:1px solid #d5d0c6;font-size:12px;color:var(--muted)}
+.footer a{color:#204d6b}
+@media(max-width:960px){.layout{grid-template-columns:1fr}}
+@media(max-width:620px){header{align-items:flex-start;flex-direction:column}.stage{height:500px}.compare-grid{grid-template-columns:1fr 1fr}.compare-grid button{grid-column:1/-1}.menu button,.menu a{min-height:93px}}
+</style>
+</head>
+<body>
+<header>
+  <a href="/en/members"><b>ABOJI EXERCISE · MEMBER SPACE</b></a>
+  <div class="header-right"><a href="/en/">English Home</a><a href="/en/news">News</a><a href="/en/install">Install shortcut</a><button class="notice-reopen" id="reopenNotice" type="button">✦ Notices</button></div>
+</header>
+<div id="authStatus" class="status-line" role="status" style="width:min(100% - 24px,1240px);margin:20px auto">Checking your member access…</div>
+<main id="memberMain" hidden>
+  <section class="hero">
+    <div>
+      <div class="kicker">Morning 6 · My 120 Days</div>
+      <h1>Welcome, <span id="memberName">friend</span>.</h1>
+      <p>Your personal Wongu 圓球 grows through one verified member-page visit per local calendar day. Pair each check-in with actual Aboji Exercise. The visit counter does not verify exercise.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><span>Challenge day</span><strong id="dayNumber">—</strong><small>of 120 calendar days</small></div>
+      <div class="stat"><span>Daily check-ins</span><strong id="practiceNumber">—</strong><small>one verified visit per local day</small></div>
+    </div>
+  </section>
+  <button class="member-notice" id="memberNotice" type="button" aria-label="Dismiss this notification. Tap Notices in the header to reopen it.">
+    <span class="notice-icon" aria-hidden="true">✦</span>
+    <span class="notice-body"><span class="notice-label" id="noticeCategory">MEMBER NOTICE</span><strong class="notice-title" id="noticeTitle">Your Wongu is taking shape</strong><span class="notice-description" id="noticeDescription">Tap to dismiss.</span></span>
+    <span class="notice-dismiss">TAP TO DISMISS ×</span>
+  </button>
+  <nav class="menu" aria-label="Member navigation">
+    <a id="zoomCard" href="#morning"><span>Live practice</span><strong>Join Morning 6 Zoom ↗</strong><em>Daily online gathering</em></a>
+    <a id="jumpVideo" href="#videoSection"><span>Learn</span><strong>Practice Videos ↓</strong><em>Video library</em></a>
+    <a id="newsCard" href="/en/news"><span>Updates</span><strong>News & Notices ↗</strong><em>Latest announcements</em></a>
+    <button id="openBody" type="button"><span>Body record</span><strong>Start Body Check</strong><em>Optional private questions</em></button>
+  </nav>
+  <section class="layout">
+    <article class="panel sphere-panel">
+      <div class="panelhead">
+        <div class="kicker" style="color:#edca72">My Wongu 圓球</div>
+        <h2>Every check-in adds structure.</h2>
+        <p>Drag to rotate. Recorded days build the form in their 40-day chapters. The completed shell appears only after 40/40 check-ins.</p>
+      </div>
+      <div class="stage">
+        <canvas id="sphereCanvas" aria-label="Animated Wongu formation based on your recorded daily check-ins"></canvas>
+        <div class="sphere-stats">
+          <div class="mini"><span>DAY</span><strong id="sphereDay">—</strong></div>
+          <div class="mini practice"><span>CHECK-INS</span><strong id="spherePractice">0</strong></div>
+        </div>
+        <div class="overlay"><div class="phasebox"><strong id="sphereStage">Loading Wongu</strong><span id="sphereSub">Checking your recorded days…</span></div></div>
+        <button class="info-btn first-guide" id="infoBtn" type="button">What Is Wongu?</button>
+      </div>
+    </article>
+    <aside class="side">
+      <section class="panel tenreki-panel">
+        <div class="kicker">Heavenly Calendar · Tenreki</div>
+        <div class="tenreki-title"><h2>天暦（陰暦 ∞ 陽暦）</h2><span class="anshi-badge" id="anshiBadge" hidden>安侍日 · Anshi-il</span></div>
+        <div class="calendar-grid"><div>
+          <div class="calendar-label">陰暦 · LUNISOLAR DATE</div><div class="calendar-lunar" id="lunarDate">—</div>
+          <div class="calendar-label" style="margin-top:9px">陽暦 · SOLAR DATE</div><div class="calendar-solar" id="solarDate">—</div>
+          <div class="calendar-ganzhi" id="ganzhiDay">日干支 · Sexagenary day</div>
+        </div><div class="moon-display"><canvas id="moonCanvas" width="140" height="140" aria-label="Illustration of the Moon phase"></canvas><b id="moonPhase">Moon phase</b><small id="moonAge">月齢 · Moon age</small></div></div>
+        <p class="calendar-note" id="anshiNote">安侍日 (Anshi-il) is an eight-day rhythm marker, starting October 9, 2026.</p>
+        <p class="calendar-note" id="timeZoneNote">Dates follow your registered time zone. Lunisolar and Moon values are approximate.</p>
+      </section>
+      <section class="panel stage-card">
+        <div class="kicker">Current formation</div><h2 id="currentTitle">Loading</h2>
+        <div class="big-stage" id="currentCount">—</div>
+        <p id="currentExplain">The completed form appears faintly as a guide.</p>
+        <div class="stage-map" id="stageMap"></div>
+      </section>
+      <section class="panel add-panel">
+        <div class="kicker">My Body Checklist</div><h2>Notice what changes.</h2>
+        <p class="body-privacy">Private member data for personal progress review, stored in the Aboji Exercise member database while this program is operated. Only you and authorized program administrators can access it. To request deletion, email <a href="mailto:am6.abonim.exercise@gmail.com">am6.abonim.exercise@gmail.com</a>. This is not a diagnosis.</p>
+        <div class="milestone-due" id="bodyReminder" hidden></div>
+        <div class="quick"><input id="bodyInput" maxlength="180" placeholder="Add a body note"><button class="btn primary" id="addBody" type="button">Add</button></div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px"><button class="btn secondary" id="openBody2" type="button">Body questions</button><button class="btn ghost" id="saveSnapshot" type="button">Save snapshot</button><button class="btn ghost" id="openHistory" type="button">History / Compare</button></div>
+        <div class="items" id="bodyItems"></div>
+      </section>
+    </aside>
+  </section>
+  <section class="panel timeline-panel">
+    <div class="kicker">Body record milestones</div><h2>Start · Day 40 · Day 80 · Day 120</h2>
+    <div class="timeline" id="timeline"></div>
+  </section>
+  <section class="panel library" id="videoSection">
+    <div class="kicker">Practice library</div><h2>Videos for learning and practice</h2>
+    <p>Choose a series and title below. The videos come from the current Aboji Exercise member library.</p>
+    <section id="latest" class="latest" hidden><div class="kicker">Latest learning video</div><h3>New from Aboji Exercise</h3><video id="latestPlayer" controls playsinline preload="metadata"></video></section>
+    <div id="series" aria-live="polite">Loading current videos…</div>
+  </section>
+  <section class="account">
+    <div class="kicker">Member preferences</div><h2>Practice updates</h2>
+    <label><input id="emailUpdates" type="checkbox"> I would like to receive occasional email updates about practice and learning.</label>
+    <p id="emailPreferenceStatus" role="status">You can change this choice at any time.</p>
+  </section>
+  <footer class="footer">This is your personal member page. Please do not share your approval access link. Body notes are private personal records. <a href="/en/install">Install a shortcut</a> · <a href="/en/news">News</a> · <a href="/en/">English home</a>.</footer>
+</main>
+<dialog id="infoDialog">
+  <div class="dhead"><div><div class="kicker" style="color:#edca72">Wongu 圓球 · Aboji Exercise</div><h2>What Is Wongu?</h2></div><button id="closeInfo" type="button" aria-label="Close Wongu explanation">×</button></div>
+  <div class="dbody wongu-info-copy">
+    <h3>圓球 · A sphere built around a center</h3>
+    <p><strong>Wongu</strong> is the Korean reading used here for 圓球, a concept passed down through Aboji Exercise. It represents the relationship between a stable center, opposing directions, and continuous circular movement. In this program, your Wongu grows visually as you keep returning to practice.</p>
+    <p>The sphere is a <strong>symbolic picture of continuity and participation</strong>, not a measurement of health or proof that a workout was completed.</p>
+    <h3>The meaning of the numbers</h3>
+    <div class="principle-grid">
+      <div class="principle-card"><b>8</b><p>An eight-day rhythm. Try to practice every day when possible, ideally at least twice in each eight-day period, and aim for at least once.</p></div>
+      <div class="principle-card"><b>40</b><p>One forty-day chapter. A small Wongu is fully completed only when all 40 daily participation days are recorded in that chapter.</p></div>
+      <div class="principle-card"><b>120</b><p>Three chapters of 40 days. When all three small Wongu are complete, they come together as one Great Wongu.</p></div>
+      <div class="principle-card"><b>13</b><p>In Aboji Exercise's symbolic interpretation, 13 represents the idea of a center that emerges beyond a completed cycle.</p></div>
+    </div>
+    <h3>How the form develops</h3>
+    <p><strong>3 · Awakening:</strong> three points and a center. <strong>6 · Growth:</strong> six opposing directions. <strong>12 · Completion of directions:</strong> six original directions plus eight diagonals. Then twelve cube edges, face connections, inward/outward circulation, and synchronization are added one practice at a time. Only the 40th counted practice closes the completed small Wongu shell.</p>
+    <h3>The principle of continuity</h3>
+    <p>According to Aboji's teaching, a single intense session is not the whole story. Returning regularly, finding your center, and repeating simple movements build a rhythm over time. The eight-day cycles are reminders to reconnect, not deadlines to punish yourself.</p>
+    <p><strong>For your Wongu to grow, regular member-page check-ins and actual exercise practice both matter.</strong> On this member site, a verified page visit counts at most once per calendar day toward the digital Wongu. Physical exercise is encouraged alongside that visit, but the check-in alone cannot verify that exercise took place.</p>
+    <p>Try Aboji Exercise after waking, when possible. A shorter evening practice can also be helpful. On a tiring day, gentle breathing practice, even while lying down, can be a way to maintain the habit.</p>
+    <p class="soft-note">The numerical meanings and relationship to cosmic cycles are teachings and symbols within Aboji Exercise, not scientific or medical claims. This member page uses verified, once-per-day page visits as participation records. Visits do not verify exercise performance.</p>
+  </div>
+</dialog>
+<dialog id="bodyDialog">
+  <div class="dhead"><div><div class="kicker" style="color:#edca72">Body Check</div><h2>Body Check Questions</h2></div><button id="closeBody" type="button">×</button></div>
+  <div class="dbody">
+    <div class="kicker" id="qNum"></div><h2 id="qTitle" style="font:400 28px/1.2 Georgia,serif"></h2><p id="qPrompt" style="color:var(--muted)"></p>
+    <div class="choices"><button id="qNo" type="button">No / not today</button><button id="qYes" type="button">Yes</button></div>
+    <div class="detail" id="qDetail" hidden><textarea id="qNote" placeholder="Optional private note"></textarea><select id="qSeverity"><option value="1">1 · Mild</option><option value="2">2 · Noticeable with movement</option><option value="3">3 · Often affects daily activity</option><option value="4">4 · Strong / present at rest</option></select></div>
+    <label class="body-consent"><input type="checkbox" id="bodyConsent"> <span>I understand these optional body notes are stored in my private member record for personal progress review while this program is operated. I may request deletion at any time. They are not a medical diagnosis.</span></label>
+    <p class="health-note">This record is for personal observation only. Seek appropriate medical care for sudden, severe, or concerning symptoms.</p>
+    <div class="dialog-actions"><button class="btn ghost" id="qBack" type="button">Back</button><button class="btn primary" id="qNext" type="button">Next</button></div>
+  </div>
+</dialog>
+<dialog id="historyDialog"><div class="dhead"><div><div class="kicker" style="color:#edca72">Private body records</div><h2>History &amp; comparison</h2></div><button id="closeHistory" type="button" aria-label="Close">×</button></div><div class="dbody"><div class="history-list" id="historyList"></div><h3>Compare two milestone records</h3><div class="compare-grid"><label>Earlier<select id="compareFrom"></select></label><label>Later<select id="compareTo"></select></label><button class="btn primary" id="compareBtn" type="button">Compare</button></div><div class="history-detail" id="historyDetail" hidden></div></div></dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+<script>(() => {
+"use strict";
+const API="/api/en/120";
+const $=s=>document.querySelector(s);
+const CHALLENGE_START="2026-10-10",ANSHI_START="2026-10-09",DAY_MS=86400000;
+function todayJst(){const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const x=Object.fromEntries(p.filter(a=>a.type!=='literal').map(a=>[a.type,a.value]));return `${x.year}-${x.month}-${x.day}`}
+function ymdUtc(ymd){const [y,m,d]=ymd.split('-').map(Number);return Date.UTC(y,m-1,d)}
+function addYmd(ymd,delta){return new Date(ymdUtc(ymd)+delta*DAY_MS).toISOString().slice(0,10)}
+function previewDay(ymd){return Math.max(0,Math.min(120,Math.floor((ymdUtc(ymd)-ymdUtc(CHALLENGE_START))/DAY_MS)+1))}
+const state={name:'friend',currentDay:0,calendarDate:todayJst(),afterChallenge:false,practiced:Array(120).fill(false),timeZone:'Asia/Tokyo',seenWonguIntro:false};
+let dashboard=null,member=null,memberKey=null;
+let viewYaw=0,viewPitch=0,dragActive=false,dragPointerId=null,dragLastX=0,dragLastY=0,autoViewResumeAt=0,lastCanvasFrame=0;
+let lastAddedAt=0,lastAddedCount=0,practicePulseEffects=[];
+let milestoneReady=false,previousGeometry=[0,0,0],previousPracticeCounts=[0,0,0],previousBigComplete=false,milestoneEffects=[];
+let forcedCosmicEvent="auto";
+function uiPrefKey(key){return `aboji-wongu-v1:${memberKey||'guest'}:${key}`}
+function readUiPref(key, fallback){try{return JSON.parse(localStorage.getItem(uiPrefKey(key)))??fallback}catch(_){return fallback}}
+function writeUiPref(key,value){try{localStorage.setItem(uiPrefKey(key),JSON.stringify(value))}catch(_){}}
+function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,3200)}
+function save(){} // Production member records are stored on the server, never in localStorage.
+
+function clamp(n,a,b){n=Number(n);return Number.isFinite(n)?Math.max(a,Math.min(b,n)):a}
+function practiceCount(){return state.practiced.filter(Boolean).length}
+function countRange(a,b){let n=0;for(let d=a;d<=b;d++)if(state.practiced[d-1])n++;return n}
+function blockForDay(day){return Math.floor((day-1)/8)}
+function rangeForBlock(i){return{start:i*8+1,end:Math.min(i*8+8,120)}}
+function blockCount(i){const r=rangeForBlock(i);return countRange(r.start,r.end)}
+function sixDirectionReady(stats){return stats.count>=6||(stats.count>=5&&stats.activeBlocks===5&&stats.minBlock>=1)}
+function fourteenDirectionReady(stats){return stats.count>=12}
+function milestoneLevel(stats){if(fourteenDirectionReady(stats))return 12;if(sixDirectionReady(stats))return 6;if(stats.count>=3)return 3;return stats.count}
+function effectiveGeometryDay(stats){
+ const c=stats.count;
+ if(c<=3)return c;
+ if(c<6&&!sixDirectionReady(stats))return c;
+ if(c<=6||(c===5&&sixDirectionReady(stats)))return 6;
+ if(c<12)return 6+(c-6)*(9/6);
+ if(c===12)return 15;
+ if(c<=24)return 15+(c-12)*(9/12);
+ if(c<=30)return 24+(c-24)*(8/6);
+ if(c<=34)return 32+(c-30)*.22;
+ if(c<=39)return 35+(c-35)*(4/4);
+ return 40;
+}
+function phaseStats(index){
+ const start=index*40+1,end=start+39,count=countRange(start,end);
+ const blocks=Array.from({length:5},(_,j)=>blockCount(index*5+j));
+ const activeBlocks=blocks.filter(v=>v>0).length,fullBlocks=blocks.filter(v=>v===8).length,minBlock=Math.min(...blocks),coverage=activeBlocks/5,density=count/40;
+ const base={index,start,end,count,blocks,activeBlocks,fullBlocks,minBlock,coverage,density};
+ const geometryDay=effectiveGeometryDay(base),quality=count<=3?Math.max(0,count/40):Math.min(1,.42*coverage+.58*density);
+ return{...base,geometryDay,quality}
+}
+function isChallengeOpen(){return state.currentDay>=1}
+function currentPhaseIndex(){return Math.min(2,Math.floor((Math.max(1,state.currentDay)-1)/40))}
+function geometryText(stats){
+ const c=stats.count;
+ if(c<=0)return["Before the first point","Your first verified daily visit begins the shape. The completed form is a faint guide."];
+ if(c===1)return["Check-in 1 · First point","One directional point appears."];
+ if(c===2)return["Check-in 2 · First line","A relationship between two points becomes a visible line."];
+ if(c===3)return["Check-in 3 · Center Awakening","Three points close into a triangle, and a center emerges."];
+ if(c<6&&!sixDirectionReady(stats))return[`Check-in ${c} · Opposite directions`,`Opposite directions are added one by one, moving from plane to space.`];
+ if(c<=6||(c===5&&sixDirectionReady(stats)))return["Six directions · Growth","Up/down, front/back, left/right stand as a 3D structure. The center grows."];
+ if(c<12)return[`Diagonal directions · ${Math.min(8,Math.max(1,Math.round((c-6)*8/6)))}/8`,`Diagonal directions are being added over the six-direction form.`];
+ if(c===12)return["Fourteen directions · Completion","Six original directions plus eight diagonals are complete."];
+ if(c<=24)return[`Cube edge ${c-12}/12`,`One cube edge is added for each new practice.`];
+ if(c<=30)return[`Six-direction face link ${c-24}/6`,`Each original direction is connected to the four vertices of its cube face.`];
+ if(c<=34)return[`Inner ↔ outer circulation ${c-30}/4`,`Two-way circulation between center and fourteen directions becomes active.`];
+ if(c<=39)return[`Synchronization ${c-34}/5`,`The entire form synchronizes, but the outer shell is still not closed.`];
+ return["Small Wongu complete · 40/40","The closed outer shell, completed core, and continuous circulation appear only at 40/40."]
+}
+function iSafe(v){return Math.max(0,Math.min(255,Math.round(v)))}
+
+/* 3D engine from Japanese production version */
+const canvas=$("#sphereCanvas"),ctx=canvas.getContext("2d");
+function resizeCanvas(){
+ const rect=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.floor(rect.width*dpr)),h=Math.max(1,Math.floor(rect.height*dpr));
+ if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
+ ctx.setTransform(dpr,0,0,dpr,0,0)
+}
+function rot(v,ax,ay,az){let[x,y,z]=v,c=Math.cos(ax),s=Math.sin(ax),y1=y*c-z*s,z1=y*s+z*c;y=y1;z=z1;c=Math.cos(ay);s=Math.sin(ay);let x1=x*c+z*s;z1=-x*s+z*c;x=x1;z=z1;c=Math.cos(az);s=Math.sin(az);x1=x*c-y*s;y1=x*s+y*c;return[x1,y1,z]}
+function project(v,cx,cy){const vv=rot(v,viewPitch,viewYaw,0),f=620,scale=f/(f-vv[2]);return[cx+vv[0]*scale,cy+vv[1]*scale,scale]}
+function norm(v){const l=Math.hypot(...v)||1;return v.map(x=>x/l)}
+function cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]}
+function rgba(hex,a){const n=parseInt(hex.slice(1),16),r=(n>>16)&255,g=(n>>8)&255,b=n&255;return`rgba(${r},${g},${b},${a})`}
+function add3(a,b){return[a[0]+b[0],a[1]+b[1],a[2]+b[2]]}
+function mix3(a,b,t){return[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t,a[2]+(b[2]-a[2])*t]}
+function smooth(t){t=Math.max(0,Math.min(1,t));return t*t*(3-2*t)}
+function drawPoint(p,r,color,alpha,cx,cy,glow=12){const q=project(p,cx,cy);ctx.beginPath();ctx.arc(q[0],q[1],Math.max(.7,r*q[2]),0,Math.PI*2);ctx.fillStyle=rgba(color,alpha);ctx.shadowBlur=glow;ctx.shadowColor=rgba(color,Math.min(1,alpha));ctx.fill();ctx.shadowBlur=0}
+function drawLine3(a,b,color,alpha,w,cx,cy){const pa=project(a,cx,cy),pb=project(b,cx,cy);ctx.beginPath();ctx.moveTo(pa[0],pa[1]);ctx.lineTo(pb[0],pb[1]);ctx.strokeStyle=rgba(color,alpha);ctx.lineWidth=w;ctx.stroke()}
+function drawScreenRing(center,r,color,alpha,w,cx,cy,dash=[]){const p=project(center,cx,cy);ctx.save();ctx.beginPath();ctx.arc(p[0],p[1],r*p[2],0,Math.PI*2);ctx.strokeStyle=rgba(color,alpha);ctx.lineWidth=w;ctx.setLineDash(dash);ctx.stroke();ctx.restore()}
+function orbitBasis(normal){const ref=Math.abs(normal[2])<.9?[0,0,1]:[0,1,0];const u=norm(cross(normal,ref));const v=norm(cross(normal,u));return[u,v]}
+const PHASE_COLORS=["#72c8ff","#edca72","#b69cff"];
+const RING_NORMALS=[norm([1,0,0]),norm([0,1,0]),norm([0,0,1]),norm([1,1,1]),norm([1,-1,1])];
+const AXIS_DIRS=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+const DIAG_DIRS=[];for(const x of[-1,1])for(const y of[-1,1])for(const z of[-1,1])DIAG_DIRS.push(norm([x,y,z]));
+function localWorld(v,center,scale,R){const p=rot([v[0]*scale,v[1]*scale,v[2]*scale],...R);return add3(p,center)}
+function drawRunner3(a,b,time,offset,color,speed,size,alpha,cx,cy,reverse=false){
+ const pa=project(a,cx,cy),pb=project(b,cx,cy);let t=(time*speed+offset)%1;if(reverse)t=1-t;
+ const x=pa[0]+(pb[0]-pa[0])*t,y=pa[1]+(pb[1]-pa[1])*t;
+ ctx.beginPath();ctx.arc(x,y,size,0,Math.PI*2);ctx.fillStyle=rgba(color,alpha);ctx.shadowColor=rgba(color,alpha);ctx.shadowBlur=10;ctx.fill();ctx.shadowBlur=0
+}
+const OCT_EDGES=[];for(let i=0;i<AXIS_DIRS.length;i++)for(let j=i+1;j<AXIS_DIRS.length;j++){const a=AXIS_DIRS[i],b=AXIS_DIRS[j],dot=a[0]*b[0]+a[1]*b[1]+a[2]*b[2];if(Math.abs(dot)<.001)OCT_EDGES.push([i,j])}
+const CUBE_EDGES=[];for(let i=0;i<DIAG_DIRS.length;i++)for(let j=i+1;j<DIAG_DIRS.length;j++){const a=DIAG_DIRS[i],b=DIAG_DIRS[j];let diff=0;if(Math.sign(a[0])!==Math.sign(b[0]))diff++;if(Math.sign(a[1])!==Math.sign(b[1]))diff++;if(Math.sign(a[2])!==Math.sign(b[2]))diff++;if(diff===1)CUBE_EDGES.push([i,j])}
+function faceVerticesForAxis(axis){const k=Math.abs(axis[0])>.5?0:(Math.abs(axis[1])>.5?1:2),sign=Math.sign(axis[k]);return DIAG_DIRS.map((v,i)=>({v,i})).filter(o=>Math.sign(o.v[k])===sign)}
+function drawGreatCircle(center,scale,R,normal,color,alpha,width,cx,cy,dash=[]){
+ const[u,v]=orbitBasis(normal),radius=72*scale,N=88,pts=[];
+ for(let k=0;k<N;k++){const a=k/N*Math.PI*2,local=[radius*(u[0]*Math.cos(a)+v[0]*Math.sin(a)),radius*(u[1]*Math.cos(a)+v[1]*Math.sin(a)),radius*(u[2]*Math.cos(a)+v[2]*Math.sin(a))];pts.push(localWorld(local,center,1,R))}
+ ctx.save();ctx.setLineDash(dash);
+ for(let k=0;k<N;k++){const z=(pts[k][2]+pts[(k+1)%N][2])/2,depth=Math.max(.22,Math.min(1,.55+z/420));drawLine3(pts[k],pts[(k+1)%N],color,alpha*depth,width,cx,cy)}
+ ctx.restore()
+}
+function drawFutureWonguGhost(center,displayScale,now,cx,cy,phaseIndex=0){
+ const st=phaseStats(phaseIndex),fade=Math.max(0,1-Math.min(1,st.count/12));if(fade<=.01)return;
+ const a=.42*fade,R=[.42,now*.00007+phaseIndex*1.55,.08],scale=displayScale,rr=55*scale;
+ OCT_EDGES.forEach(e=>{const va=AXIS_DIRS[e[0]],vb=AXIS_DIRS[e[1]],p=localWorld([va[0]*rr,va[1]*rr,va[2]*rr],center,1,R),q=localWorld([vb[0]*rr,vb[1]*rr,vb[2]*rr],center,1,R);drawLine3(p,q,"#82cfff",a*.36,.7,cx,cy)});
+ DIAG_DIRS.forEach(v=>{const p=localWorld([v[0]*rr,v[1]*rr,v[2]*rr],center,1,R);drawLine3(center,p,"#c4a9ff",a*.30,.65,cx,cy)});
+ CUBE_EDGES.forEach(e=>{const va=DIAG_DIRS[e[0]],vb=DIAG_DIRS[e[1]],p=localWorld([va[0]*rr,va[1]*rr,va[2]*rr],center,1,R),q=localWorld([vb[0]*rr,vb[1]*rr,vb[2]*rr],center,1,R);drawLine3(p,q,"#efcf77",a*.26,.6,cx,cy)});
+ [norm([1,0,0]),norm([0,1,0]),norm([0,0,1]),norm([1,1,0]),norm([1,0,1]),norm([0,1,1])].forEach((n,i)=>drawGreatCircle(center,scale,R,n,i<3?"#7ccfff":"#b7ddff",a*(i<3?.48:.28),.62,cx,cy));
+ drawScreenRing(center,76*scale,"#e7f4ff",a*.52,.8,cx,cy,[3,7]);drawPoint(center,3.2,"#fff0ae",a*.75,cx,cy,8)
+}
+function drawOriginalGeometrySphere(phaseIndex,center,displayScale,now,cx,cy,focus=true){
+ const stats=phaseStats(phaseIndex),g=stats.geometryDay,d=Math.floor(g),color=PHASE_COLORS[phaseIndex];if(stats.count<=0)return;
+ const R=d>=4?[.42+Math.sin(now*.00016+phaseIndex)*.07,now*.000115*(phaseIndex%2?-.88:1)+phaseIndex*1.75,.09*Math.sin(now*.00012+phaseIndex)]:[0,0,0];
+ const density=stats.density,coverage=stats.coverage,scale=displayScale*(d<4?.82:(.86+.14*stats.quality)),rr=55*scale;
+ const first=[AXIS_DIRS[0],AXIS_DIRS[2],AXIS_DIRS[4]],nFirst=Math.min(3,d);
+ for(let i=0;i<nFirst;i++)drawPoint(localWorld([first[i][0]*rr,first[i][1]*rr,first[i][2]*rr],center,1,R),focus?4.3:2.3,color,.95,cx,cy,12);
+ if(d>=2){const a=localWorld([first[0][0]*rr,first[0][1]*rr,first[0][2]*rr],center,1,R),b=localWorld([first[1][0]*rr,first[1][1]*rr,first[1][2]*rr],center,1,R);drawLine3(a,b,color,.48,1.45,cx,cy)}
+ if(d>=3){
+   for(let i=0;i<3;i++){const a=localWorld([first[i][0]*rr,first[i][1]*rr,first[i][2]*rr],center,1,R),v=first[(i+1)%3],b=localWorld([v[0]*rr,v[1]*rr,v[2]*rr],center,1,R);drawLine3(a,b,color,.64,focus?1.7:.8,cx,cy);drawLine3(a,center,"#edca72",.12,.7,cx,cy);if(focus)drawRunner3(a,center,now,i/3,"#edca72",.00025,1.5,.72,cx,cy)}
+   drawPoint(center,2.5,"#fff0ae",.9,cx,cy,9)
+ }
+ const opposite=[AXIS_DIRS[1],AXIS_DIRS[3],AXIS_DIRS[5]],nOpp=Math.max(0,Math.min(3,d-3));
+ for(let i=0;i<nOpp;i++){const v=opposite[i],p=localWorld([v[0]*rr,v[1]*rr,v[2]*rr],center,1,R);drawPoint(p,focus?4:2.1,"#72e1cf",.9,cx,cy,11);drawLine3(center,p,"#72e1cf",.22,.9,cx,cy)}
+ if(d>=6)OCT_EDGES.forEach((e,i)=>{const va=AXIS_DIRS[e[0]],vb=AXIS_DIRS[e[1]],a=localWorld([va[0]*rr,va[1]*rr,va[2]*rr],center,1,R),b=localWorld([vb[0]*rr,vb[1]*rr,vb[2]*rr],center,1,R);drawLine3(a,b,"#72e1cf",.42+.10*density,focus?1.35:.7,cx,cy);if(focus&&density>.15)drawRunner3(a,b,now,i/OCT_EDGES.length,"#72e1cf",.00018,1.35,.45+.35*density,cx,cy)});
+ if(d>=3){const grow=Math.min(1,Math.max(0,(d-3)/4)),coreR=2.5+grow*(focus?6.5:3.2);drawPoint(center,coreR,"#fff0ae",.70+.25*grow,cx,cy,8+18*grow);if(d>=7)drawScreenRing(center,11*scale+7*grow,"#fff0ae",.15+.16*grow,.8+grow*.7,cx,cy)}
+ if(stats.minBlock>=1&&d>=6&&d<15){
+   const shellA=(.065+.055*Math.min(1,(stats.count-5)/5))*(focus?1:.72);
+   [norm([1,0,0]),norm([0,1,0]),norm([0,0,1])].forEach(n=>drawGreatCircle(center,scale,R,n,"#87d8ff",shellA,.75,cx,cy));
+   drawScreenRing(center,70*scale,"#c9ecff",.06+.06*Math.min(1,(stats.count-5)/5),.85,cx,cy)
+ }
+ const nDiag=stats.count>=12?8:(stats.count<=6?0:Math.min(8,Math.max(1,Math.round((stats.count-6)*8/6))));
+ for(let i=0;i<nDiag;i++){const v=DIAG_DIRS[i],p=localWorld([v[0]*rr,v[1]*rr,v[2]*rr],center,1,R);drawLine3(center,p,"#d5a7ff",.25+.08*density,focus?1.05:.6,cx,cy);drawPoint(p,focus?3.4:1.9,"#d5a7ff",.88,cx,cy,11);if(focus)drawRunner3(center,p,now,i/8,"#d5a7ff",.00024,1.35,.60,cx,cy)}
+ stats.blocks.forEach((count,j)=>drawEightDayRing(phaseIndex,j,count,center,scale,R,now,cx,cy));
+ if(stats.count>=12){
+   const shellProgress=Math.min(1,(stats.count-12)/12),shellAlpha=(.12+.14*shellProgress)*(focus?1:.7)*(0.55+.45*coverage);
+   [norm([1,0,0]),norm([0,1,0]),norm([0,0,1]),norm([1,1,0]),norm([1,0,1]),norm([0,1,1])].forEach((n,i)=>drawGreatCircle(center,scale,R,n,i<3?"#72c8ff":"#8fdcff",shellAlpha*(i<3?1:.62),.75+.35*shellProgress,cx,cy));
+   drawScreenRing(center,76*scale,"#d9efff",.08+.10*shellProgress,1,cx,cy)
+ }
+ const post14=Math.max(0,stats.count-12),cubeEdgeCount=Math.min(CUBE_EDGES.length,post14);
+ if(cubeEdgeCount>0){
+   for(let i=0;i<cubeEdgeCount;i++){const e=CUBE_EDGES[i],va=DIAG_DIRS[e[0]],vb=DIAG_DIRS[e[1]],a=localWorld([va[0]*rr,va[1]*rr,va[2]*rr],center,1,R),b=localWorld([vb[0]*rr,vb[1]*rr,vb[2]*rr],center,1,R),newest=i===cubeEdgeCount-1&&stats.count<25;drawLine3(a,b,newest?"#fff0ae":"#f3a45e",newest?.92:(.34+.22*density),newest?(focus?2.25:1.2):(focus?1.25:.68),cx,cy);if(focus)drawRunner3(a,b,now,i/12,"#f3a45e",.00016,1.3,.42+.34*density,cx,cy)}
+ }
+ const axisBridgeCount=Math.min(6,Math.max(0,stats.count-24));
+ if(axisBridgeCount>0){
+   for(let ai=0;ai<axisBridgeCount;ai++){const axis=AXIS_DIRS[ai],ap=localWorld([axis[0]*rr,axis[1]*rr,axis[2]*rr],center,1,R),verts=faceVerticesForAxis(axis);verts.forEach((o,j)=>{const v=o.v,bp=localWorld([v[0]*rr,v[1]*rr,v[2]*rr],center,1,R),newest=ai===axisBridgeCount-1&&stats.count<31;drawLine3(ap,bp,newest?"#fff0ae":"#72e1cf",newest?.82:(.20+.22*density),newest?(focus?1.7:.9):(focus?1.0:.55),cx,cy);if(focus&&newest)drawRunner3(ap,bp,now,j/4,"#fff0ae",.00021,1.25,.75,cx,cy)})}
+ }
+ if(stats.count>=31){
+   const p=Math.min(1,(stats.count-30)/4),all=[...AXIS_DIRS,...DIAG_DIRS];
+   all.forEach((v,i)=>{const q=localWorld([v[0]*rr,v[1]*rr,v[2]*rr],center,1,R);drawLine3(center,q,"#fff0ae",.03+.09*p,.72,cx,cy);if(focus){drawRunner3(center,q,now,i/all.length,"#fff0ae",.00014+.00007*p,1.35,.50*p,cx,cy);drawRunner3(center,q,now,i/all.length+.5,"#72e1cf",.00011+.00005*p,1.0,.30*p,cx,cy,true)}})
+ }
+ if(stats.count>=35&&stats.count<40){
+   const p=Math.min(1,(stats.count-34)/5),pulse=.5+.5*Math.sin(now*.0022),base=78*scale;
+   drawScreenRing(center,base*(1+.018*pulse*p),"#fff0ae",.055+.15*p*pulse,1+1.0*p,cx,cy,[4,5]);drawScreenRing(center,base*(.72+.06*pulse),"#72e1cf",.045+.08*p,.85,cx,cy,[2,7]);
+   if(focus){const n=Math.floor(8+14*p);for(let i=0;i<n;i++){const a=i/n*Math.PI*2+now*.0003,rad=base*(.82+.11*Math.sin(now*.0015+i)),q=project(center,cx,cy);ctx.beginPath();ctx.arc(q[0]+Math.cos(a)*rad,q[1]+Math.sin(a)*rad*.65,1.1,0,Math.PI*2);ctx.fillStyle=rgba(i%2?"#edca72":"#72c8ff",.10+.09*p);ctx.fill()}}
+ }
+ if(stats.count>=40){
+   const pulse=.5+.5*Math.sin(now*.0020),all=[...AXIS_DIRS,...DIAG_DIRS];
+   [norm([1,0,0]),norm([0,1,0]),norm([0,0,1]),norm([1,1,1]),norm([1,-1,1])].forEach((n,i)=>drawGreatCircle(center,scale*1.06,R,n,i<3?"#fff0ae":"#72e1cf",i<3?.36:.24,i<3?1.45:1.05,cx,cy));
+   drawScreenRing(center,(88+2*pulse)*scale,"#ffffff",.34+.12*pulse,2.15,cx,cy);drawScreenRing(center,(96+4*pulse)*scale,"#fff0ae",.24+.10*pulse,1.65,cx,cy);drawScreenRing(center,(104+6*pulse)*scale,"#72e1cf",.14+.08*pulse,1.0,cx,cy,[3,6]);drawPoint(center,focus?10.5:6.2,"#fff0ae",.98,cx,cy,30);
+   if(focus)all.forEach((v,i)=>{const q=localWorld([v[0]*rr,v[1]*rr,v[2]*rr],center,1,R);drawRunner3(center,q,now,i/all.length,i%2?"#edca72":"#ffffff",.00022,1.75,.86,cx,cy)})
+ }
+}
+function drawEightDayRing(phaseIndex,blockIndex,count,center,scale,R,now,cx,cy){
+ if(count<=0)return;const color=PHASE_COLORS[phaseIndex],normal=RING_NORMALS[blockIndex],[u,v]=orbitBasis(normal),radius=92*scale,N=72,pts=[];
+ for(let k=0;k<N;k++){const a=k/N*Math.PI*2,local=[radius*(u[0]*Math.cos(a)+v[0]*Math.sin(a)),radius*(u[1]*Math.cos(a)+v[1]*Math.sin(a)),radius*(u[2]*Math.cos(a)+v[2]*Math.sin(a))];pts.push(localWorld(local,center,1,R))}
+ const ratio=count/8;for(let k=0;k<N;k++)drawLine3(pts[k],pts[(k+1)%N],color,.035+.04*ratio,.55+.25*ratio,cx,cy);
+ const lit=Math.max(1,Math.round(N*ratio)),offset=(phaseIndex*17+blockIndex*11)%N;for(let s=0;s<lit;s++){const k=(offset+s)%N;drawLine3(pts[k],pts[(k+1)%N],color,.18+.46*ratio,.85+1.0*ratio,cx,cy)}
+ const globalBlock=phaseIndex*5+blockIndex,range=rangeForBlock(globalBlock);
+ for(let j=0;j<8;j++){const a=j/8*Math.PI*2,local=[radius*(u[0]*Math.cos(a)+v[0]*Math.sin(a)),radius*(u[1]*Math.cos(a)+v[1]*Math.sin(a)),radius*(u[2]*Math.cos(a)+v[2]*Math.sin(a))],wp=localWorld(local,center,1,R),day=range.start+j;if(state.practiced[day-1])drawPoint(wp,1.9,color,.92,cx,cy,7)}
+ const dir=blockIndex%2?1:-1,a=(now*.00018*(1+blockIndex*.06)*dir+blockIndex*1.17)%(Math.PI*2),local=[radius*(u[0]*Math.cos(a)+v[0]*Math.sin(a)),radius*(u[1]*Math.cos(a)+v[1]*Math.sin(a)),radius*(u[2]*Math.cos(a)+v[2]*Math.sin(a))];drawPoint(localWorld(local,center,1,R),2.0+1.0*ratio,color,.45+.45*ratio,cx,cy,9)
+}
+function drawPhaseSphere(phaseIndex,center,displayScale,now,cx,cy,focus=true){drawOriginalGeometrySphere(phaseIndex,center,displayScale,now,cx,cy,focus)}
+function orbitAround(center,now,phase=0,rx=165,ry=118){const a=now*.000075+phase;return[center[0]+Math.cos(a)*rx,center[1]+Math.sin(a)*ry,center[2]+Math.sin(a)*34]}
+function finalCenters(){return[[-96,56,0],[96,56,0],[0,-112,0]]}
+function centroid3(a,b,c){return[(a[0]+b[0]+c[0])/3,(a[1]+b[1]+c[1])/3,(a[2]+b[2]+c[2])/3]}
+function drawMetaSystem(centers,now,cx,cy){
+ const stats=[phaseStats(0),phaseStats(1),phaseStats(2)],weakest=stats.reduce((a,b)=>a.count<=b.count?a:b),weakCount=weakest.count,weakGeom=weakest.geometryDay;if(weakCount<3)return;
+ const mc=centroid3(...centers),overall=Math.min(1,weakGeom/40),pointGrowth=Math.min(1,weakGeom/7),sphereGrowth=Math.max(0,Math.min(1,(weakGeom-6)/9)),circulation=Math.max(0,Math.min(1,(weakGeom-24)/8)),sync=Math.max(0,Math.min(1,(weakGeom-32)/8)),pulse=.5+.5*Math.sin(now*(.0016+overall*.001));
+ const triAlpha=.025+.14*overall;drawLine3(centers[0],centers[1],"#edca72",triAlpha,1,cx,cy);drawLine3(centers[1],centers[2],"#edca72",triAlpha,1,cx,cy);drawLine3(centers[2],centers[0],"#edca72",triAlpha,1,cx,cy);
+ centers.forEach((p,i)=>drawLine3(p,mc,i===0?"#72c8ff":i===1?"#edca72":"#b69cff",.022+.10*overall,.7+.45*overall,cx,cy));
+ const baseRadius=weakGeom<=3?2.2:2.2+pointGrowth*2.6+sphereGrowth*8+sync*3;drawPoint(mc,baseRadius*(1+.04*pulse*sync),"#fff0ae",weakGeom<=3?.68:.72+.24*overall,cx,cy,weakGeom<=3?4:10+28*overall);
+ if(weakGeom>=7){drawScreenRing(mc,8+18*sphereGrowth,"#fff0ae",.10+.18*sphereGrowth,.7+sphereGrowth,cx,cy);if(sphereGrowth>.4)drawScreenRing(mc,10+22*sphereGrowth,"#72c8ff",.05+.09*sphereGrowth,.7,cx,cy,[3,5])}
+ if(weakGeom>=25)centers.forEach((p,i)=>{drawRunner3(p,mc,now,i/3,i===0?"#72c8ff":i===1?"#b69cff":"#edca72",.00013,1.35,.52*circulation,cx,cy);drawRunner3(mc,p,now,i/3+.5,"#fff0ae",.00010,1.05,.30*circulation,cx,cy)});
+ if(weakGeom>=33)for(let i=0;i<3;i++){const ph=(now*.00018+i*.33)%1;drawScreenRing(mc,26+ph*(38+22*sync),i===0?"#edca72":"#72c8ff",(1-ph)*.11*sync,1,cx,cy)}
+ if(weakGeom>=40){drawScreenRing(mc,52+5*pulse,"#fff0ae",.22+.18*pulse,2,cx,cy);drawScreenRing(mc,62+8*pulse,"#72e1cf",.12+.10*pulse,1.1,cx,cy,[3,7])}
+}
+function bigSphereComplete(){return state.currentDay>=120&&[0,1,2].every(i=>phaseStats(i).count>=40)}
+function drawBigWonguBack(centers,now,cx,cy){
+ if(!bigSphereComplete())return;const mc=centroid3(...centers),p=project(mc,cx,cy),w=canvas.getBoundingClientRect().width,h=canvas.getBoundingClientRect().height,r=Math.min(w,h)*.455,pulse=.5+.5*Math.sin(now*.00135);
+ const g=ctx.createRadialGradient(p[0]-r*.25,p[1]-r*.28,r*.05,p[0],p[1],r);g.addColorStop(0,"rgba(255,240,174,.035)");g.addColorStop(.72,"rgba(70,150,255,.018)");g.addColorStop(.94,"rgba(100,210,255,.055)");g.addColorStop(1,"rgba(255,240,174,.12)");ctx.fillStyle=g;ctx.beginPath();ctx.arc(p[0],p[1],r,0,Math.PI*2);ctx.fill();
+ ctx.save();for(let i=0;i<6;i++){const a=now*.00008*(i%2?-1:1)+i*Math.PI/6;ctx.beginPath();ctx.ellipse(p[0],p[1],r*(.98-i*.018),r*(.20+.105*i),a*.42,0,Math.PI*2);ctx.strokeStyle=rgba(i%2?"#72e1cf":"#edca72",.07+.025*(i%3)+.025*pulse);ctx.lineWidth=.8+(i%2)*.35;ctx.stroke()}ctx.restore()
+}
+function drawBigWonguFront(centers,now,cx,cy){
+ if(!bigSphereComplete())return;const mc=centroid3(...centers),p=project(mc,cx,cy),w=canvas.getBoundingClientRect().width,h=canvas.getBoundingClientRect().height,r=Math.min(w,h)*.455,pulse=.5+.5*Math.sin(now*.0017);
+ ctx.save();ctx.shadowColor="rgba(255,225,130,.8)";ctx.shadowBlur=20+18*pulse;ctx.beginPath();ctx.arc(p[0],p[1],r*(1+.008*pulse),0,Math.PI*2);ctx.strokeStyle=rgba("#fff0ae",.52+.16*pulse);ctx.lineWidth=2.4;ctx.stroke();ctx.shadowBlur=0;ctx.beginPath();ctx.arc(p[0],p[1],r*1.045,0,Math.PI*2);ctx.strokeStyle=rgba("#72c8ff",.25+.08*pulse);ctx.lineWidth=1.2;ctx.setLineDash([4,8]);ctx.stroke();ctx.restore()
+}
+
+/* milestones and a new +1 growth burst */
+function milestoneCenterText(th){if(th===3)return["AWAKENING","Three points form a center"];if(th===6)return["GROWTH","Six directions support the center"];if(th===12)return["COMPLETION","Fourteen directions come together"];return["",""]}
+function updateMilestoneEffects(now){
+ const stats=[phaseStats(0),phaseStats(1),phaseStats(2)];
+ if(!milestoneReady){previousGeometry=stats.map(s=>milestoneLevel(s));previousPracticeCounts=stats.map(s=>s.count);previousBigComplete=bigSphereComplete();milestoneReady=true;return}
+ stats.forEach((st,i)=>{const prev=previousGeometry[i],level=milestoneLevel(st);[3,6,12].forEach(th=>{if(prev<th&&level>=th){const[text,sub]=milestoneCenterText(th);milestoneEffects.push({phase:i,text,sub,start:now,duration:1900})}});if(previousPracticeCounts[i]<40&&st.count>=40)milestoneEffects.push({phase:i,text:"Small Wongu complete!",sub:`Sphere ${i+1} · 40/40`,start:now,duration:3000,completion:true})});
+ const bigNow=bigSphereComplete();if(!previousBigComplete&&bigNow)milestoneEffects.push({big:true,text:"Great Wongu complete!",sub:"Three completed Wongu close into one greater sphere",start:now,duration:4300,completion:true});
+ previousBigComplete=bigNow;previousGeometry=stats.map(s=>milestoneLevel(s));previousPracticeCounts=stats.map(s=>s.count)
+}
+function drawMilestoneEffects(now,centers,cx,cy){
+ milestoneEffects=milestoneEffects.filter(f=>now-f.start<f.duration);
+ milestoneEffects.forEach(f=>{const t=(now-f.start)/f.duration,fade=t<.18?t/.18:t>.72?(1-t)/.28:1,center=f.big?centroid3(...finalCenters()):(centers[f.phase]||[0,0,0]),p=project(center,cx,cy),burst=Math.min(1,t/.45);ctx.save();
+ for(let i=0;i<3;i++){ctx.beginPath();ctx.arc(p[0],p[1],18+i*16+burst*(34+i*18),0,Math.PI*2);ctx.strokeStyle=rgba(f.completion?"#fff0ae":f.phase===0?"#72c8ff":f.phase===1?"#edca72":"#b69cff",(.34-i*.07)*fade*(1-burst*.42));ctx.lineWidth=f.completion?2.4:1.6;ctx.stroke()}
+ const fs=f.big?Math.min(30,Math.max(18,cx*.08)):(f.completion?Math.min(29,Math.max(17,cx*.072)):Math.min(34,Math.max(21,cx*.084)));ctx.textAlign="center";ctx.textBaseline="middle";ctx.font=`900 ${fs}px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif`;ctx.fillStyle=rgba("#fff7d0",.96*fade);ctx.shadowColor=rgba("#edca72",.9*fade);ctx.shadowBlur=f.completion?30:24;ctx.fillText(f.text,cx,cy-(f.big?15:12),Math.max(130,cx*1.72));ctx.shadowBlur=0;ctx.font='800 13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';ctx.fillStyle=rgba("#eef6ff",.9*fade);ctx.fillText(f.sub,cx,cy+(f.big?31:38),Math.max(135,cx*1.85));ctx.restore()})
+}
+function triggerPracticeBurst(count){
+ lastAddedAt=performance.now();lastAddedCount=count;practicePulseEffects.push({start:lastAddedAt,duration:1100,count})
+}
+function drawPracticeBursts(now,cx,cy){
+ practicePulseEffects=practicePulseEffects.filter(f=>now-f.start<f.duration);
+ practicePulseEffects.forEach(f=>{const t=(now-f.start)/f.duration,fade=1-t,r=18+t*90;ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle=rgba("#fff0ae",.38*fade);ctx.lineWidth=1.6;ctx.stroke();ctx.textAlign="center";ctx.font='900 15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';ctx.fillStyle=rgba("#fff4bb",.9*fade);ctx.fillText(`+1 · ${f.count}`,cx,cy-52-t*18);ctx.restore()})
+}
+
+/* cosmic background matching Japanese version */
+const STARFIELD=Array.from({length:185},(_,i)=>({x:((i*73)%997)/997,y:((i*193)%991)/991,r:.35+(i%7)*.16,p:i*.77,s:.00055+(i%5)*.00008}));
+function cosmicPhase(){return state.currentDay<=40?0:state.currentDay<=80?1:2}
+function phaseCosmosTheme(){const p=cosmicPhase();return p===0?{core:"rgba(55,111,200,.095)",mid:"rgba(30,60,115,.030)",star:[185,215,255],accent:"#72c8ff"}:p===1?{core:"rgba(145,104,188,.090)",mid:"rgba(117,80,128,.030)",star:[236,218,255],accent:"#edca72"}:{core:"rgba(56,151,163,.090)",mid:"rgba(75,69,154,.034)",star:[194,245,255],accent:"#b69cff"}}
+function cosmicVariant(){if(forcedCosmicEvent==="none")return -1;if(forcedCosmicEvent==="comet")return 0;if(forcedCosmicEvent==="meteor")return 1;if(forcedCosmicEvent==="ship")return 2;if(forcedCosmicEvent==="aurora")return 3;if(forcedCosmicEvent==="orbiter")return 4;return (state.currentDay*37+11)%7}
+function drawDailyCosmicEvent(now,w,h){
+ const variant=cosmicVariant(),phase=cosmicPhase(),accent=phaseCosmosTheme().accent;ctx.save();
+ const hx=w*(phase===0?.20:phase===1?.78:.50),hy=h*(phase===0?.68:phase===1?.30:.72),hr=Math.max(w,h)*.46,hg=ctx.createRadialGradient(hx,hy,0,hx,hy,hr);hg.addColorStop(0,rgba(accent,.035));hg.addColorStop(1,"rgba(0,0,0,0)");ctx.fillStyle=hg;ctx.fillRect(0,0,w,h);
+ if(variant===0||variant===5){const t=(now%18000)/18000,x=w*(1.16-t*1.42),y=h*(.16+t*.34),len=Math.min(w,h)*.16,g=ctx.createLinearGradient(x,y,x+len,y-len*.36);g.addColorStop(0,"rgba(255,255,255,.85)");g.addColorStop(.18,"rgba(150,221,255,.48)");g.addColorStop(1,"rgba(90,160,255,0)");ctx.strokeStyle=g;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+len,y-len*.36);ctx.stroke();ctx.fillStyle="rgba(255,255,255,.92)";ctx.beginPath();ctx.arc(x,y,1.6,0,Math.PI*2);ctx.fill()}
+ if(variant===1)for(let j=0;j<2;j++){const t=((now+j*5200)%14500)/14500,x=w*(1.1-t*1.30),y=h*(.18+j*.33+t*.15);ctx.strokeStyle=`rgba(198,232,255,${.16+.18*(1-t)})`;ctx.lineWidth=.9;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+48,y-18);ctx.stroke()}
+ if(variant===2){const t=(now%26000)/26000,x=w*(-.10+t*1.20),y=h*(.20+.035*Math.sin(now*.001));ctx.translate(x,y);ctx.globalAlpha=.42;ctx.fillStyle="rgba(150,220,255,.35)";ctx.beginPath();ctx.ellipse(0,-5,15,8,0,Math.PI,Math.PI*2);ctx.fill();ctx.strokeStyle="rgba(220,244,255,.72)";ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(0,0,28,7,0,0,Math.PI*2);ctx.stroke();ctx.fillStyle="rgba(237,202,114,.70)";[-13,0,13].forEach(px=>{ctx.beginPath();ctx.arc(px,2,1.8,0,Math.PI*2);ctx.fill()})}
+ if(variant===3){const yy=h*.12,grad=ctx.createLinearGradient(0,yy,w,yy+50);grad.addColorStop(0,"rgba(85,180,255,0)");grad.addColorStop(.5,"rgba(114,225,207,.055)");grad.addColorStop(1,"rgba(182,156,255,0)");ctx.strokeStyle=grad;ctx.lineWidth=16;ctx.beginPath();for(let x=0;x<=w;x+=12){const y=yy+Math.sin(x*.014+now*.00032)*13;x===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke()}
+ if(variant===4){const a=now*.00009,r=Math.min(w,h)*.39,x=w*.5+Math.cos(a)*r,y=h*.46+Math.sin(a)*r*.22;ctx.fillStyle="rgba(255,226,145,.55)";ctx.shadowColor="rgba(255,226,145,.55)";ctx.shadowBlur=12;ctx.beginPath();ctx.arc(x,y,2.1,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0}
+ ctx.restore()
+}
+function drawStarfield(now,w,h){
+ const theme=phaseCosmosTheme();ctx.save();for(const s of STARFIELD){const tw=.18+.48*(.5+.5*Math.sin(now*s.s+s.p)),x=s.x*w,y=s.y*h;ctx.beginPath();ctx.arc(x,y,s.r,0,Math.PI*2);const[rr,gg,bb]=theme.star;ctx.fillStyle=`rgba(${iSafe(rr+s.r*10)},${iSafe(gg+s.r*7)},${iSafe(bb)},${tw})`;ctx.fill();if(s.r>1.1&&tw>.45){ctx.beginPath();ctx.moveTo(x-3*s.r,y);ctx.lineTo(x+3*s.r,y);ctx.moveTo(x,y-3*s.r);ctx.lineTo(x,y+3*s.r);ctx.strokeStyle=`rgba(${rr},${gg},${bb},${tw*.24})`;ctx.lineWidth=.55;ctx.stroke()}}const g=ctx.createRadialGradient(w*.32,h*.28,0,w*.32,h*.28,Math.max(w,h)*.72);g.addColorStop(0,theme.core);g.addColorStop(.45,theme.mid);g.addColorStop(1,"rgba(0,0,0,0)");ctx.fillStyle=g;ctx.fillRect(0,0,w,h);ctx.restore();drawDailyCosmicEvent(now,w,h)
+}
+
+function drawCanvas(now){
+ resizeCanvas();const rect=canvas.getBoundingClientRect(),w=rect.width,h=rect.height,cx=w/2,cy=h*.48;ctx.clearRect(0,0,w,h);
+ if(!dragActive&&now>autoViewResumeAt){const dt=lastCanvasFrame?Math.min(34,now-lastCanvasFrame):16;viewYaw+=dt*.000035}lastCanvasFrame=now;
+ drawStarfield(now,w,h);
+ const bg=ctx.createRadialGradient(cx,cy,8,cx,cy,Math.min(w,h)*.48);bg.addColorStop(0,"rgba(70,145,255,.12)");bg.addColorStop(.42,"rgba(34,70,125,.05)");bg.addColorStop(1,"rgba(0,0,0,0)");ctx.fillStyle=bg;ctx.beginPath();ctx.arc(cx,cy,Math.min(w,h)*.48,0,Math.PI*2);ctx.fill();
+ const centers=[null,null,null];
+ if(state.currentDay<=40){
+   centers[0]=[0,0,0];drawFutureWonguGhost(centers[0],1.46,now,cx,cy,0);drawPhaseSphere(0,centers[0],1.46,now,cx,cy,true)
+ }else if(state.currentDay<=80){
+   const c2=[0,0,0],c1=orbitAround(c2,now,Math.PI,165,118);centers[0]=c1;centers[1]=c2;drawFutureWonguGhost(c2,1.28,now,cx,cy,1);const q1=project(c1,cx,cy),q2=project(c2,cx,cy);if(q1[2]<q2[2])drawPhaseSphere(0,c1,.38,now,cx,cy,false);drawPhaseSphere(1,c2,1.28,now,cx,cy,true);if(q1[2]>=q2[2])drawPhaseSphere(0,c1,.38,now,cx,cy,false)
+ }else{
+   const central=[0,0,0],o1=orbitAround(central,now,0,170,120),o2=orbitAround(central,now,Math.PI,170,120);let c1=o1,c2=o2,c3=central,s1=.37,s2=.37,s3=1.28,assemble=0;
+   if(state.currentDay>=111){assemble=smooth((state.currentDay-110)/10);const targets=finalCenters();c1=mix3(o1,targets[0],assemble);c2=mix3(o2,targets[1],assemble);c3=mix3(central,targets[2],assemble);s1=.37+(.70-.37)*assemble;s2=.37+(.70-.37)*assemble;s3=1.28+(.70-1.28)*assemble}
+   centers[0]=c1;centers[1]=c2;centers[2]=c3;drawFutureWonguGhost(c3,s3,now,cx,cy,2);const full=bigSphereComplete();if(full)drawBigWonguBack([c1,c2,c3],now,cx,cy);
+   [{i:0,c:c1,s:s1,f:assemble>.88},{i:1,c:c2,s:s2,f:assemble>.88},{i:2,c:c3,s:s3,f:true}].sort((a,b)=>a.c[2]-b.c[2]).forEach(o=>drawPhaseSphere(o.i,o.c,o.s,now,cx,cy,o.f));
+   if(state.currentDay>=111)drawMetaSystem([c1,c2,c3],now,cx,cy);if(full)drawBigWonguFront([c1,c2,c3],now,cx,cy)
+ }
+ updateMilestoneEffects(now);drawMilestoneEffects(now,centers,cx,cy);drawPracticeBursts(now,cx,cy);requestAnimationFrame(drawCanvas)
+}
+/* Member notifications: persistent until tapped, separate from short status toasts. */
+let latestNotice=null;
+function showNotice(category,title,description,force=false){
+ latestNotice={category,title,description};
+ const key=`${state.calendarDate}:${category}:${title}`;
+ const dismissed=readUiPref("dismissedNotice", "");
+ if(!force && dismissed===key){$('#memberNotice').hidden=true;return}
+ $('#noticeCategory').textContent=category;$('#noticeTitle').textContent=title;$('#noticeDescription').textContent=description;
+ $('#memberNotice').hidden=false;
+}
+function showDailyNotice(){
+ const day=state.currentDay,ymd=state.calendarDate,period=day>0?Math.floor((day-1)/8)+1:0,dayInPeriod=day>0?((day-1)%8)+1:0;
+ if(state.afterChallenge){showNotice('CHALLENGE PERIOD COMPLETE','The 120-day period has ended','Your check-in history and body records remain available. The 120-day Wongu only reflects days recorded during the original challenge.');return}
+ if(day===0){showNotice('CHALLENGE ANNOUNCEMENT','The 120-Day Challenge starts October 10, 2026','Before the start, explore Wongu and save a starting body checklist. When the challenge begins, return regularly and practice Aboji Exercise.');return}
+ if(day===120&&bigSphereComplete()){showNotice('120-DAY MILESTONE','Your Great Wongu is complete!','Three small Wongu have come together. Celebrate your consistency and compare your Start, Day 40, Day 80, and Day 120 body records.');return}
+ if(isAnshiDate(ymd)){showNotice('安侍日 · ANSHI-IL','Anshi-il: your eight-day rhythm marker','Today marks one of the eight-day rhythm points. Daily practice is ideal; aim for twice in eight days when possible, and at least once as a starting goal.');return}
+ if(dayInPeriod===1){showNotice('8-DAY RHYTHM',`Eight-day cycle ${period} begins`,`A new eight-day rhythm starts today. Try to practice twice this cycle, and aim for at least one session. Keep the movement gentle and consistent.`);return}
+ if(dayInPeriod===8){showNotice('8-DAY RHYTHM',`Eight-day cycle ${period} is closing`,`Today completes this eight-day period. Reflect on your practice and carry your rhythm into the next cycle, without judging yourself by one missed day.`);return}
+ if(day===40||day===80){showNotice('40-DAY MILESTONE',`Chapter ${day/40} reaches its 40-day mark`,`Review your body checklist. The small Wongu closes only when 40 daily participation days are recorded in that chapter; the calendar milestone alone does not complete it.`);return}
+ const notes=[
+ ['ABOJI EXERCISE TIP','Begin the day with your center','Aboji encouraged exercise after waking. Even a short morning practice can be a way to begin the day with attention and steadiness.'],
+ ['CONTINUITY','One center from morning to night','As Aboji taught, bring the beginning and end of the day back to one center. Let today be one complete turn.'],
+ ['THE RHYTHM OF NATURE','A day is a cycle, too','The sky turns from morning to night and back again. Use that image as a reminder to return to your practice.'],
+ ['GENTLE PRACTICE','A little breathing still counts as practice','On a tiring day, consider gentle deep-breathing movements, even while lying down, rather than forcing an intense workout.'],
+ ['MEMBER TIP','Your daily check-in grows the digital Wongu','In the live version, opening your authenticated member page counts once per day. Pair that check-in with actual exercise for the habit you are building.'],
+ ['BODY CHECK TIP','Notice your body, not only your numbers','A brief daily visit to review your checklist can help you stay aware. Your digital Wongu grows through regular check-ins, while exercise remains a separate practice.'],
+ ['ZOOM TIP','Morning 6 is an easy way to reconnect','Use the Morning 6 Zoom entrance when you can. In the intended live system, your daily member-page visit contributes to Wongu growth.'],
+ ['PRACTICE TIP','Morning when possible, evening when helpful','Aboji favored morning exercise. A calm session before sleep can also help you maintain a regular routine.']
+ ];const note=notes[(day*7+period)%notes.length];showNotice(...note)
+}
+function notifyGrowth(total){
+ if(total===0){showDailyNotice();return}
+ const idx=currentPhaseIndex(),c=phaseStats(idx).count;
+ if(total===120){showNotice('GREAT WONGU COMPLETED','Great Wongu Complete!','120 recorded participation days: all three small Wongu are complete, and the greater enclosing sphere now appears.');return}
+ if(c===40){showNotice('SMALL WONGU COMPLETED',`Small Wongu ${idx+1} Complete!`,'The 40th recorded participation day closes this sphere. The center, fourteen directions, cube, circulation, and completed shell now form one structure.');return}
+ const special={3:['AWAKENING','The center has appeared','Three points now form a triangle, and a center emerges.'],6:['GROWTH','Six directions have formed','Up/down, left/right, and front/back give the Wongu its first three-dimensional structure.'],12:['COMPLETION OF DIRECTIONS','Fourteen directions are present','Six original directions and eight diagonals now form the full directional framework.'],24:['CUBE FORMATION','The twelve cube edges are connected','Practices 13–24 have added the cube edges one by one.'],30:['FACE CONNECTIONS','All six face connections are in place','The six original directions now connect with the cube faces.'],34:['INNER / OUTER CIRCULATION','Circulation connects center and structure','The center and the outer directions now form a flowing two-way pattern.'],39:['ALMOST COMPLETE','One more counted day to close the small Wongu','The structure is synchronized, but the shell remains open until 40/40.']};
+ if(special[c]){showNotice(...special[c]);return}
+ if(c>=35){showNotice('WONGU PROGRESS',`Synchronization: ${c}/40 in Wongu ${idx+1}`,'The whole structure is becoming coordinated. The completed outer shell is still reserved for practice 40.');return}
+ if(c>=31){showNotice('WONGU PROGRESS',`Circulation: ${c-30}/4 stages`,'The center and outer directions exchange movement. Each counted day adds another layer.');return}
+ if(c>=25){showNotice('WONGU PROGRESS',`Face connections: ${c-24}/6`,'A new connection from an original direction to a cube face has appeared.');return}
+ if(c>=13){showNotice('WONGU PROGRESS',`Cube edge ${c-12} of 12 added`,'One more edge is visible. The cube grows step by step rather than appearing all at once.');return}
+ showNotice('WONGU PROGRESS',`Check-in ${total} recorded`,`Wongu ${idx+1} has ${c}/40 recorded days. Regular check-ins help the digital Wongu grow; actual Aboji Exercise is a separate, important practice.`)
+}
+$('#memberNotice').onclick=()=>{if(latestNotice)writeUiPref('dismissedNotice',`${state.calendarDate}:${latestNotice.category}:${latestNotice.title}`);$('#memberNotice').hidden=true};
+$('#reopenNotice').onclick=()=>{if(latestNotice)showNotice(latestNotice.category,latestNotice.title,latestNotice.description,true);else showDailyNotice()};
+
+/* Tenreki (天暦): lunisolar date, Gregorian date, Moon phase, eight-day Anshi-il. */
+const NEW_MOONS_UTC=[
+ '2026-07-14T09:43:36Z','2026-08-12T17:36:43Z','2026-09-11T03:27:01Z',
+ '2026-10-10T15:50:06Z','2026-11-09T07:02:07Z','2026-12-09T00:51:51Z',
+ '2027-01-07T20:24:25Z','2027-02-06T15:56:09Z','2027-03-08T09:29:29Z',
+ '2027-04-06T23:51:08Z','2027-05-06T10:58:37Z','2027-06-04T19:40:21Z'
+].map(x=>Date.parse(x));
+const SYNODIC=29.530588853;
+function moonForDate(ymd){
+ const moment=ymdUtc(ymd)+3*3600000; // local noon in Japan = 03:00 UTC
+ let base=NEW_MOONS_UTC[0];for(const nm of NEW_MOONS_UTC){if(nm<=moment)base=nm;else break}
+ let age=(moment-base)/DAY_MS;
+ if(moment<NEW_MOONS_UTC[0]||moment>NEW_MOONS_UTC.at(-1)+32*DAY_MS){age=((moment-Date.parse('2026-10-10T15:50:06Z'))/DAY_MS)%SYNODIC;if(age<0)age+=SYNODIC}
+ const p=age/SYNODIC,illum=(1-Math.cos(2*Math.PI*p))/2;
+ let name=p<.055?'New Moon':p<.20?'Waxing Crescent':p<.30?'First Quarter':p<.45?'Waxing Gibbous':p<.55?'Full Moon':p<.70?'Waning Gibbous':p<.80?'Last Quarter':'Waning Crescent';
+ return{age,p,illum,name}
+}
+function drawMoon(ymd){
+ const c=$('#moonCanvas'),g=c.getContext('2d'),W=c.width,H=c.height,cx=W/2,cy=H/2,R=W*.43,moon=moonForDate(ymd);
+ const img=g.createImageData(W,H),data=img.data,theta=2*Math.PI*moon.p,sx=Math.sin(theta),sz=-Math.cos(theta);
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const nx=(x-cx)/R,ny=(y-cy)/R,r2=nx*nx+ny*ny,k=(y*W+x)*4;if(r2>1){data[k+3]=0;continue}const nz=Math.sqrt(1-r2),light=Math.max(0,nx*sx+nz*sz),edge=.65+.35*nz,base=10+Math.round(18*edge),lit=Math.round(208*light*edge);data[k]=base+lit;data[k+1]=base+lit+5;data[k+2]=base+lit+15;data[k+3]=255}
+ g.clearRect(0,0,W,H);g.putImageData(img,0,0);g.beginPath();g.arc(cx,cy,R,0,Math.PI*2);g.strokeStyle='rgba(215,235,255,.45)';g.lineWidth=1.5;g.stroke();
+ $('#moonPhase').textContent=moon.name;$('#moonAge').textContent=`月齢 ≈ ${moon.age.toFixed(1)} days · ${Math.round(moon.illum*100)}%`;
+}
+function isAnshiDate(ymd){const delta=Math.round((ymdUtc(ymd)-ymdUtc(ANSHI_START))/DAY_MS);return delta>=0&&delta%8===0}
+const STEMS=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+const BRANCHES=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+function julianDayNumber(ymd){let[y,m,d]=ymd.split('-').map(Number);const a=Math.floor((14-m)/12);y=y+4800-a;m=m+12*a-3;return d+Math.floor((153*m+2)/5)+365*y+Math.floor(y/4)-Math.floor(y/100)+Math.floor(y/400)-32045}
+function ganzhi(ymd){const i=((julianDayNumber(ymd)+49)%60+60)%60;return STEMS[i%10]+BRANCHES[i%12]}
+function renderTenreki(){
+ const ymd=state.calendarDate||todayJst(),d=new Date(ymd+'T03:00:00Z');
+ try{$('#lunarDate').textContent=new Intl.DateTimeFormat('en-u-ca-chinese',{calendar:'chinese',month:'long',day:'numeric',timeZone:'Asia/Tokyo'}).format(d)}catch(_){$('#lunarDate').textContent='Lunisolar date unavailable'}
+ $('#solarDate').textContent=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Tokyo',year:'numeric',month:'long',day:'numeric',weekday:'short'}).format(d);
+ $('#ganzhiDay').textContent=`日干支 · ${ganzhi(ymd)} · 60-day cycle`;
+ $('#anshiBadge').hidden=!isAnshiDate(ymd);
+ const delta=Math.round((ymdUtc(ymd)-ymdUtc(ANSHI_START))/DAY_MS),until=(8-(delta%8)+8)%8;
+ $('#anshiNote').textContent=isAnshiDate(ymd)?'安侍日 (Anshi-il) · Today is an eight-day rhythm marker. The cycle starts October 9, 2026.':`安侍日 (Anshi-il) · Eight-day marker since October 9, 2026. Next marker in ${until} day${until===1?'':'s'}.`;
+ drawMoon(ymd)
+}
+
+
+
+/* Production data and member services */
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+async function fetchJson(url,options={}){
+ const r=await fetch(url,{cache:'no-store',credentials:'same-origin',...options});
+ let data;try{data=await r.json()}catch(_){throw Error(`Unexpected server response (${r.status}).`)}
+ if(!r.ok)throw Error(data.message||`Request failed (${r.status}).`);
+ return data;
+}
+async function post(action,payload={}){return fetchJson(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...payload})})}
+async function trackEvent(eventType,meta={}){try{await post('event',{eventType,meta})}catch(_){}}
+function applyDashboard(d){
+ dashboard=d;
+ memberKey=d.memberKey||'member';
+ state.name=(d.displayName||member?.name||'friend').split(/\s+/)[0];
+ state.timeZone=d.timeZone||'Asia/Tokyo';
+ state.calendarDate=d.localDate||todayJst();
+ state.afterChallenge=Number(d.currentDay)>120;
+ state.currentDay=clamp(Number(d.currentDay)||0,0,120);
+ state.practiced=Array(120).fill(false);
+ for(const day of (d.visitDays||[])){const n=Number(day);if(Number.isInteger(n)&&n>=1&&n<=120)state.practiced[n-1]=true}
+ state.seenWonguIntro=readUiPref('seenWonguIntro',false);
+ milestoneReady=false;milestoneEffects=[];
+ renderUI();
+}
+function renderUI(){
+ const total=practiceCount(),pi=currentPhaseIndex(),stats=phaseStats(pi),[baseTitle,baseExplain]=geometryText(stats),great=bigSphereComplete();
+ const title=great?'Great Wongu complete · 120/120':baseTitle;
+ const explain=great?'Three completed small Wongu have joined inside the Great Wongu. The outer sphere appears only after all 120 daily check-ins.':baseExplain;
+ $('#memberName').textContent=state.name;
+ $('#dayNumber').textContent=state.currentDay||'—';$('#practiceNumber').textContent=total;
+ $('#sphereDay').textContent=state.currentDay||'—';$('#spherePractice').textContent=total;
+ $('#infoBtn').classList.toggle('first-guide',!state.seenWonguIntro);
+ $('#infoBtn').textContent=state.seenWonguIntro?'About Wongu':'What Is Wongu?';
+ $('#timeZoneNote').textContent=`Calendar date: ${state.calendarDate} (${state.timeZone}). The East Asian lunisolar date, Moon age and day cycle are approximate.`;
+ renderTenreki();
+ $('#currentTitle').textContent=title;$('#currentExplain').textContent=explain;
+ $('#currentCount').textContent=great?'120 / 120 · Three completed Wongu':`${stats.count} / 40 in Wongu ${pi+1}`;
+ $('#sphereStage').textContent=title;$('#sphereSub').textContent=explain;
+ const rows=[
+ [1,'First point','A directional seed appears.'],[2,'First line','Two points are connected.'],[3,'Triangle + center · Awakening','Three points close and the center emerges.'],
+ [6,'Six directions · Growth','Up/down, front/back, left/right form a 3D structure.'],[12,'Fourteen directions · Completion','Eight diagonals join the six original directions.'],
+ [13,'Cube edges begin','One edge per recorded day through 24.'],[24,'Cube complete','All twelve cube edges are present.'],
+ [25,'Face links begin','Six original directions connect to cube faces through 30.'],[31,'Circulation','Center ↔ outer directions begin to circulate.'],
+ [35,'Synchronization','The structure synchronizes through 39.'],[40,'Small Wongu complete','Only 40/40 closes the completed shell.']];
+ $('#stageMap').innerHTML=rows.map(r=>`<div class="stage-row ${stats.count>=r[0]?'active':''}"><b>${r[0]}</b><div>${r[1]}<small>${r[2]}</small></div></div>`).join('');
+ renderBody();renderTimeline();
+ const due=dashboard?.bodyCheckDue;
+ $('#bodyReminder').hidden=due===null||due===undefined;
+ if(due!==null&&due!==undefined)$('#bodyReminder').textContent=due===1?'Start record is ready. Use Body questions or Save snapshot.':`Day ${due} body record is due. Save a new snapshot to compare your changes.`;
+}
+function renderBody(){
+ const items=dashboard?.checklist||[];
+ $('#bodyItems').innerHTML=items.length?items.map(i=>`<div class="item"><div><strong>${esc(i.text)}</strong><small>${esc(i.source||'manual')}${i.severity?` · level ${i.severity}`:''}</small></div><button class="btn danger" data-bodydel="${esc(i.id)}" type="button">Remove</button></div>`).join(''):'<div style="color:var(--muted);padding:8px 0">No body notes yet. Add a note or start Body Check.</div>';
+}
+function renderTimeline(){
+ const m=dashboard?.milestones||{};
+ $('#timeline').innerHTML=[1,40,80,120].map(day=>{const x=m[String(day)];return`<div class="mile ${x?'done':''}"><strong>${day===1?'Start':'Day '+day}</strong><span>${x?esc(x.local_date):'Not saved'}</span><b>${x?x.item_count+' items':'—'}</b></div>`}).join('');
+}
+function updateAndNotify(d,message){applyDashboard(d);if(message)toast(message)}
+async function saveSnapshot(){
+ if(!confirm('Save your current body checklist as a private dated snapshot?'))return;
+ const b=$('#saveSnapshot');b.disabled=true;
+ try{updateAndNotify(await post('snapshot'),'Body snapshot saved to your member record.')}catch(e){toast(e.message)}finally{b.disabled=false}
+}
+$('#addBody').onclick=async()=>{
+ const input=$('#bodyInput'),text=input.value.trim();if(!text)return;
+ const b=$('#addBody');b.disabled=true;
+ try{updateAndNotify(await post('add-item',{text}),'Added to your private checklist.');input.value=''}catch(e){toast(e.message)}finally{b.disabled=false}
+};
+$('#bodyInput').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();$('#addBody').click()}};
+$('#bodyItems').onclick=async e=>{
+ const b=e.target.closest('[data-bodydel]');if(!b)return;b.disabled=true;
+ try{updateAndNotify(await post('remove-item',{id:b.dataset.bodydel}),'Item removed.')}catch(err){toast(err.message);b.disabled=false}
+};
+$('#saveSnapshot').onclick=saveSnapshot;
+const questions=[
+ {key:'pain',title:'Pain or soreness',prompt:'Do you have pain or soreness you want to track?'},
+ {key:'neck_shoulders',title:'Neck and shoulders',prompt:'Do you notice stiffness or heaviness in your neck or shoulders?'},
+ {key:'back',title:'Back and lower back',prompt:'Do you notice stiffness or discomfort in your back or lower back?'},
+ {key:'movement',title:'Movement',prompt:'Does any movement feel limited or harder than usual?'},
+ {key:'breathing',title:'Breathing',prompt:'Does your breathing feel shallow or restricted?'},
+ {key:'other',title:'Other',prompt:'Is there anything else you want to keep on your checklist?'}
+];
+let qIndex=0,qAnswers=[];
+function openBody(){qIndex=0;qAnswers=[];$('#bodyConsent').checked=false;renderQuestion();$('#bodyDialog').showModal();trackEvent('body_check_open')}
+function renderQuestion(){
+ const q=questions[qIndex],a=qAnswers[qIndex]||{key:q.key,label:q.title,yes:null,detail:'',severity:1};qAnswers[qIndex]=a;
+ $('#qNum').textContent=`Question ${qIndex+1} of ${questions.length}`;$('#qTitle').textContent=q.title;$('#qPrompt').textContent=q.prompt;
+ $('#qNo').classList.toggle('selected',a.yes===false);$('#qYes').classList.toggle('selected',a.yes===true);
+ $('#qDetail').hidden=a.yes!==true;$('#qNote').value=a.detail||'';$('#qSeverity').value=String(a.severity||1);
+ $('#qBack').disabled=qIndex===0;$('#qNext').textContent=qIndex===questions.length-1?'Save body record':'Next';
+}
+$('#qNo').onclick=()=>{qAnswers[qIndex]={key:questions[qIndex].key,label:questions[qIndex].title,yes:false,detail:'',severity:0};renderQuestion()};
+$('#qYes').onclick=()=>{qAnswers[qIndex]={...(qAnswers[qIndex]||{}),key:questions[qIndex].key,label:questions[qIndex].title,yes:true,severity:qAnswers[qIndex]?.severity||1};renderQuestion()};
+function saveQ(){const a=qAnswers[qIndex];if(a?.yes){a.detail=$('#qNote').value.trim();a.severity=Number($('#qSeverity').value)||1}}
+$('#qBack').onclick=()=>{saveQ();if(qIndex>0){qIndex--;renderQuestion()}};
+$('#qNext').onclick=async()=>{
+ const a=qAnswers[qIndex];if(a.yes===null){toast('Please choose Yes or No.');return}saveQ();
+ if(qIndex<questions.length-1){qIndex++;renderQuestion();return}
+ if(!$('#bodyConsent').checked){toast('Please confirm the private-record notice before saving.');return}
+ const b=$('#qNext');b.disabled=true;
+ try{updateAndNotify(await post('body-check',{answers:qAnswers}),'Your body record was saved.');$('#bodyDialog').close()}
+ catch(e){toast(e.message)}finally{b.disabled=false}
+};
+$('#openBody').onclick=openBody;$('#openBody2').onclick=openBody;$('#closeBody').onclick=()=>$('#bodyDialog').close();
+
+function historyOptions(){
+ const m=dashboard?.milestones||{},days=[1,40,80,120].filter(d=>m[String(d)]?.id);
+ const options=days.map(d=>`<option value="${esc(m[String(d)].id)}">${d===1?'Start':'Day '+d} · ${esc(m[String(d)].local_date)}</option>`).join('');
+ $('#compareFrom').innerHTML=options;$('#compareTo').innerHTML=options;
+ if(days.length>1)$('#compareTo').selectedIndex=days.length-1;
+ $('#compareBtn').disabled=days.length<2;
+}
+function renderHistory(){
+ const rows=dashboard?.bodyChecks||[];
+ $('#historyList').innerHTML=rows.length?rows.map(r=>`<div class="history-entry"><div><strong>${r.milestone_day?`Milestone ${r.milestone_day===1?'Start':'Day '+r.milestone_day}`:'Body record · Day '+r.challenge_day}</strong><small>${esc(r.local_date)} · ${r.item_count} checklist items</small></div><button type="button" class="btn ghost" data-view-record="${esc(r.id)}">View</button></div>`).join(''):'<p>No saved body records yet.</p>';
+ historyOptions();$('#historyDetail').hidden=true;
+}
+async function loadRecord(id){return (await post('body-check-detail',{id})).record}
+function snapshotText(r){
+ let items=[];try{items=JSON.parse(r.checklist_json||'[]')}catch(_){}
+ const header=`${r.milestone_day?`Milestone ${r.milestone_day}`:'Day '+r.challenge_day} · ${r.local_date}\n${items.length} checklist items`;
+ return header+'\n\n'+(items.length?items.map((i,n)=>`${n+1}. ${i.text}${i.severity?' (level '+i.severity+')':''}`).join('\n'):'No items at this time.');
+}
+$('#openHistory').onclick=()=>{renderHistory();$('#historyDialog').showModal()};
+$('#closeHistory').onclick=()=>$('#historyDialog').close();
+$('#historyList').onclick=async e=>{const b=e.target.closest('[data-view-record]');if(!b)return;b.disabled=true;try{const r=await loadRecord(b.dataset.viewRecord);$('#historyDetail').textContent=snapshotText(r);$('#historyDetail').hidden=false}catch(err){toast(err.message)}finally{b.disabled=false}};
+$('#compareBtn').onclick=async()=>{
+ const a=$('#compareFrom').value,b=$('#compareTo').value;if(!a||!b||a===b){toast('Select two different milestone records.');return}
+ const btn=$('#compareBtn');btn.disabled=true;
+ try{
+  const [oldR,newR]=await Promise.all([loadRecord(a),loadRecord(b)]);
+  const getItems=r=>{try{return JSON.parse(r.checklist_json||'[]').map(x=>String(x.text||''))}catch(_){return[]}};
+  const oldItems=getItems(oldR),newItems=getItems(newR),oldSet=new Set(oldItems),newSet=new Set(newItems);
+  const added=newItems.filter(t=>!oldSet.has(t)),resolved=oldItems.filter(t=>!newSet.has(t));
+  $('#historyDetail').textContent=`${oldR.local_date} → ${newR.local_date}\n\nEarlier: ${oldItems.length} items\nLater: ${newItems.length} items\n\nNew / changed notes (${added.length}):\n${added.length?added.map(x=>'• '+x).join('\n'):'None'}\n\nNo longer on checklist (${resolved.length}):\n${resolved.length?resolved.map(x=>'• '+x).join('\n'):'None'}\n\nNote: changes in wording may appear as both added and removed.`;
+  $('#historyDetail').hidden=false;
+ }catch(e){toast(e.message)}finally{btn.disabled=false}
+};
+
+$('#infoBtn').onclick=()=>{state.seenWonguIntro=true;writeUiPref('seenWonguIntro',true);$('#infoBtn').classList.remove('first-guide');$('#infoBtn').textContent='About Wongu';$('#infoDialog').showModal()};
+$('#closeInfo').onclick=()=>$('#infoDialog').close();
+$('#newsCard').addEventListener('click',()=>trackEvent('news',{href:'/en/news'}));
+$('#jumpVideo').addEventListener('click',()=>trackEvent('videos',{href:'#videoSection'}));
+
+async function loadMember(){
+ member=await fetchJson('/api/en/member');
+ const a=$('#zoomCard');if(member.zoomUrl&&/^https:\/\//.test(member.zoomUrl)){
+  a.href=member.zoomUrl;a.target='_blank';a.rel='noopener noreferrer';a.addEventListener('click',()=>trackEvent('zoom',{target:'zoom'}));
+ }else{a.href='#morning';a.setAttribute('aria-disabled','true');a.onclick=e=>{e.preventDefault();toast('Zoom access is not currently available. Please contact the team.')}}
+ const box=$('#emailUpdates'),status=$('#emailPreferenceStatus');box.checked=!!member.emailUpdatesOptIn;
+ box.onchange=async()=>{box.disabled=true;status.textContent='Saving…';try{const d=await fetchJson('/api/en/member',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({emailUpdates:box.checked})});status.textContent=d.emailUpdatesOptIn?'You are opted in to occasional email updates.':'You are opted out of email updates.'}catch(e){box.checked=!box.checked;status.textContent=e.message}finally{box.disabled=false}}
+}
+async function loadVideos(){
+ const holder=$('#series');try{
+  const latest=await fetch('/media/latest-video',{method:'HEAD',cache:'no-store',credentials:'same-origin'});
+  if(latest.ok){$('#latest').hidden=false;$('#latestPlayer').src='/media/latest-video'}
+  const d=await fetchJson('/api/en/videos');holder.replaceChildren();
+  for(const s of d.series||[]){
+   const section=document.createElement('section');section.className='series';
+   const title=document.createElement('h3');title.textContent=s.title;section.append(title);
+   if(!s.items?.length){const p=document.createElement('p');p.textContent='Videos for this series are being prepared.';section.append(p)}
+   else{
+    const frame=document.createElement('div');frame.className='player';const iframe=document.createElement('iframe');iframe.title=s.title+' video';iframe.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';iframe.allowFullscreen=true;iframe.referrerPolicy='strict-origin-when-cross-origin';frame.append(iframe);
+    const list=document.createElement('div');list.className='video-list';
+    function play(v,index){iframe.src='https://www.youtube-nocookie.com/embed/'+encodeURIComponent(v.id)+'?playsinline=1&rel=0';[...list.children].forEach((x,i)=>x.classList.toggle('active',i===index));trackEvent('video_play',{series:s.key,index:index+1})}
+    s.items.forEach((v,i)=>{const b=document.createElement('button'),n=document.createElement('span');n.textContent=String(i+1).padStart(2,'0');b.append(n,document.createTextNode(v.title));b.onclick=()=>play(v,i);list.append(b)});
+    section.append(frame,list);play(s.items[0],0)
+   }holder.append(section)
+  }
+ }catch(e){holder.textContent=e.message}
+}
+function announceNewVisit(d){
+ const last=readUiPref('lastSeenCount',null),count=practiceCount();
+ if(d.recordedToday&&last!==null&&count>last){
+  triggerPracticeBurst(count);notifyGrowth(count);
+  const pi=currentPhaseIndex(),c=phaseStats(pi).count,now=performance.now();
+  if(c===3||c===6||c===12){const [text,sub]=milestoneCenterText(c);milestoneEffects.push({phase:pi,text,sub,start:now,duration:2400})}
+  if(c===40)milestoneEffects.push({phase:pi,text:'Small Wongu Complete!',sub:`Wongu ${pi+1} · 40/40`,start:now,duration:3000,completion:true});
+  if(count===120&&bigSphereComplete())milestoneEffects.push({big:true,text:'Great Wongu Complete!',sub:'Three completed Wongu become one',start:now,duration:4300,completion:true})
+ }else showDailyNotice();
+ writeUiPref('lastSeenCount',count)
+}
+async function init(){
+ try{
+  await loadMember();
+  const d=await fetchJson(API);applyDashboard(d);
+  $('#authStatus').hidden=true;$('#memberMain').hidden=false;
+  announceNewVisit(d);resizeCanvas();
+  loadVideos();
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('/en/sw.js',{scope:'/en/'}).catch(()=>{});
+ }catch(e){
+  $('#authStatus').classList.add('error');$('#authStatus').textContent=e.message+' Please use your personal approval email link to enter the member page again.';
+ }
+}
+requestAnimationFrame(drawCanvas);
+init();
+})();
+</script>
+</body></html>
