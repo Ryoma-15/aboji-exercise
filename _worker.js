@@ -297,13 +297,32 @@ async function handleEnAccess(request, env) {
   const d = await parseEnBody(request);
   const token = field(d?.token, 100);
   if (!/^[\w-]{30,100}$/.test(token)) return json({ message: "Invalid access link." }, 400);
-  const session = randomToken();
-  const row = await env.REG_DB.prepare("UPDATE en_registrations SET access_hash=NULL,access_expires=NULL WHERE access_hash=? AND access_expires>? AND status='approved' RETURNING id").bind(await hashToken(token),epoch()).first();
-  if (!row) return json({ message: "This access link has expired or has already been used." }, 410);
-  await env.REG_DB.prepare("INSERT INTO en_sessions(token_hash,registration_id,expires_at) VALUES(?,?,?)").bind(await hashToken(session),row.id,epoch()+EN_SESSION_SECONDS).run();
-  const response = json({ ok: true, next: "/en/members" });
-  response.headers.set("Set-Cookie", `${EN_COOKIE}=${session}; Max-Age=${EN_SESSION_SECONDS}; Path=/; Secure; HttpOnly; SameSite=Lax`);
-  return response;
+  try {
+    const now = epoch();
+    const accessHash = await hashToken(token);
+    const row = await env.REG_DB.prepare(
+      "SELECT id FROM en_registrations WHERE access_hash=? AND access_expires>? AND status='approved'"
+    ).bind(accessHash, now).first();
+    if (!row) return json({ message: "This access link has expired or has already been used." }, 410);
+
+    // Avoid UPDATE ... RETURNING here. Some Pages/D1 deployments can throw an
+    // execution error for that form even though ordinary SELECT/UPDATE works.
+    const consumed = await env.REG_DB.prepare(
+      "UPDATE en_registrations SET access_hash=NULL,access_expires=NULL WHERE id=? AND access_hash=? AND access_expires>? AND status='approved'"
+    ).bind(row.id, accessHash, now).run();
+    if (!consumed.meta?.changes) return json({ message: "This access link has expired or has already been used." }, 410);
+
+    const session = randomToken();
+    await env.REG_DB.prepare(
+      "INSERT INTO en_sessions(token_hash,registration_id,expires_at) VALUES(?,?,?)"
+    ).bind(await hashToken(session), row.id, now + EN_SESSION_SECONDS).run();
+    const response = json({ ok: true, next: "/en/members" });
+    response.headers.set("Set-Cookie", `${EN_COOKIE}=${session}; Max-Age=${EN_SESSION_SECONDS}; Path=/; Secure; HttpOnly; SameSite=Lax`);
+    return response;
+  } catch (error) {
+    console.error("English member access failed", error?.message || error);
+    return json({ message: "Member access is temporarily unavailable. Please try again shortly." }, 500);
+  }
 }
 async function handleEnMemberApi(request, env, context) {
   const member = await enMember(request, env);
