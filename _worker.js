@@ -234,8 +234,45 @@ async function handleEnAdmin(request, env) {
     const hash = await hashToken(token);
     await env.REG_DB.prepare("UPDATE en_registrations SET access_hash=?,access_expires=? WHERE id=? AND status='approved'").bind(hash,epoch()+604800,row.id).run();
     const accessUrl = urlFor(request,"/en/access",token);
-    const subject = "Your Aboji Exercise member access link";
-    const body = `Hello ${row.full_name},\n\nHere is a new personal link to your Aboji Exercise member practice space. Open it in the browser you plan to use for your home-screen icon. It expires in 7 days and can be used once:\n\n${accessUrl}\n\nAfter opening it, you can add the Aboji Exercise app icon from the member page. Please do not forward this personal link.\n\nAboji Exercise`;
+    const memberPageUrl = new URL("/en/members", request.url).toString();
+    const subject = "Your New Aboji Exercise Member Access Link";
+    const body = `Hello ${row.full_name},
+
+We have issued a new personal verification link for your Aboji Exercise member page.
+
+${accessUrl}
+
+Important: This is a one-time verification link.
+
+- Please do not forward or share this link with anyone.
+- The link expires in 7 days and can be used only once.
+- Please open it on the device and in the browser you plan to use regularly.
+- We recommend using Safari, Chrome, or your usual web browser.
+- Please avoid opening it inside the Gmail, LINE, Facebook, or another app's internal browser.
+
+After your first successful access, do not use the email link again. For future visits, please open the regular member page below:
+
+${memberPageUrl}
+
+Please bookmark this page or add the Aboji Exercise icon to the home screen of your phone, tablet, or computer.
+
+Your browser will remain signed in for up to 30 days. You may need a new personal access link if:
+
+- You use a different device or browser
+- You clear your browser data or cookies
+- Your 30-day sign-in period expires
+- You lose access to the member page
+
+If you cannot access the member page, please contact us at:
+
+am6.abonim.exercise@gmail.com
+
+We will issue a new personal access link for you.
+
+Warm regards,
+
+Aboji Exercise
+Morning 6 Aboji Exercise Team`;
     return json({ ok: true,email:row.email,name:row.full_name,accessUrl,subject,body,expiresInDays:7 });
   }
   if (!/^[\da-f-]{36}$/i.test(d?.id || "") || !["approve","hold","resume","reject"].includes(d?.action)) return json({ message: "Invalid request." }, 400);
@@ -258,21 +295,42 @@ async function handleEnAdmin(request, env) {
   const updated = await env.REG_DB.prepare("UPDATE en_registrations SET status='approved',reviewed_at=?,access_hash=?,access_expires=? WHERE id=? AND status IN ('pending','held')").bind(epoch(),hash,epoch()+604800,d.id).run();
   if (!updated.meta?.changes) return json({ message: "Application already reviewed." }, 409);
   const accessUrl = urlFor(request, "/en/access", token);
+  const memberPageUrl = new URL("/en/members", request.url).toString();
   const subject = "Welcome to Aboji Exercise — Your Member Access Link";
   const body = `Hello ${row.full_name},
 
 Thank you for applying to join Aboji Exercise.
 
-We are pleased to let you know that your application has been approved. You can now access your personal member page using the link below.
+We are pleased to let you know that your application has been approved. You can now activate access to your personal member page using the link below.
 
 ${accessUrl}
 
-Important information about your access link:
-- This is your personal link. Please do not forward or share it with anyone.
+Important: This is a one-time verification link.
+
+- Please do not forward or share this link with anyone.
 - The link expires in 7 days and can be used only once.
-- Please open it in the browser and on the device you plan to use regularly.
-- After you enter the member area, that browser will remain signed in for up to 30 days.
-- If you change devices, clear your browser data, or lose access, please contact us and we will issue a new link.
+- Please open it on the device and in the browser you plan to use regularly.
+- We recommend using Safari, Chrome, or your usual web browser.
+- Please avoid opening it inside the Gmail, LINE, Facebook, or another app's internal browser.
+
+After your first successful access, do not use the email link again. For future visits, please open the regular member page below:
+
+${memberPageUrl}
+
+Please bookmark this page or add the Aboji Exercise icon to the home screen of your phone, tablet, or computer.
+
+Your browser will remain signed in for up to 30 days. You may need a new personal access link if:
+
+- You use a different device or browser
+- You clear your browser data or cookies
+- Your 30-day sign-in period expires
+- You lose access to the member page
+
+If you cannot access the member page, please contact us at:
+
+am6.abonim.exercise@gmail.com
+
+We will issue a new personal access link for you.
 
 On your member page, you can:
 - Join the Morning 6 online Zoom practice
@@ -297,6 +355,7 @@ async function handleEnAccess(request, env) {
   const d = await parseEnBody(request);
   const token = field(d?.token, 100);
   if (!/^[\w-]{30,100}$/.test(token)) return json({ message: "Invalid access link." }, 400);
+  if (await enMember(request, env)) return json({ ok: true, next: "/en/members" });
   try {
     const now = epoch();
     const accessHash = await hashToken(token);
