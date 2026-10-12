@@ -14,3 +14,17 @@
   Cache-Control: no-store
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
+
+/en/members
+  Cache-Control: private, no-store
+  X-Robots-Tag: noindex, nofollow, noarchive
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+/en/members.html
+  Cache-Control: private, no-store
+  X-Robots-Tag: noindex, nofollow, noarchive
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
